@@ -8447,18 +8447,34 @@ CFEM_DG_NSSolver::CFEM_DG_NSSolver(CGeometry *geometry, CConfig *config, unsigne
     SGSModelUsed = false;
   }
 
+
   /*--- Set the wall model information ---*/
   wallModel = new CWallModel*[nMarker];
   wallModelUsed = false;
+  /*--- Set the wall model pointers to NULL ---*/
+  for(unsigned int iMarker = 0; iMarker < nMarker; iMarker++)
+  {
+    wallModel[iMarker] = NULL;
+  }
 
   /* Loop over all boundaries. */
-  for (unsigned short iMarker = 0; iMarker < config->GetnMarker_All(); iMarker++) {
-    string marker_name = geometry->GetMarker_Tag(iMarker);
-    if(config->GetWallFunction_Treatment(marker_name) == EQUILIBRIUM_WALL_MODEL) {
+  for (unsigned short iMarker = 0; iMarker < nMarker; iMarker++) {
+    /*--- Get the boundary name ---*/
+    string markerName = this->boundaries[iMarker].markerTag;
+    /*--- Determine if this boundary uses a wall model ---*/
+    if(config->GetWallFunction_Treatment(markerName) == EQUILIBRIUM_WALL_MODEL) {
+      cout << "Marker " << markerName << " uses an Equilibrium Wall Model." << endl;
+
+      /*--- Set this wallModel to the 1-D Equilibrium Model ---*/
       wallModel[iMarker] = new CWallModel1DEQ;
+      /*--- Get the boundary data address to pass to the wall model initialization ---*/
+      CBoundaryFEM * thisBoundary = &(this->boundaries[iMarker]);
+      /*--- Set the wall model used flag to true. This indicates at the solver level whether a wall model is used
+       * or not ---*/
       wallModelUsed = true;
       /* Initialize wall model for this marker/boundary */
-      //wallModel[iMarker]->Initialize(config, geometry, this);
+      wallModel[iMarker]->Initialize(thisBoundary, config, geometry);
+
     }
   }
 }

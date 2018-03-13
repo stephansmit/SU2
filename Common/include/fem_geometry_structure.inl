@@ -81,9 +81,9 @@ inline CInternalFaceElementFEM::CInternalFaceElementFEM(void) { }
 
 inline CInternalFaceElementFEM::~CInternalFaceElementFEM(void) { }
 
-inline CSurfaceElementFEM::CSurfaceElementFEM(void) {indStandardElement = -1;}
-
 inline CSurfaceElementFEM::~CSurfaceElementFEM(void) { }
+
+inline CSurfaceElementFEM::CSurfaceElementFEM(void) {indStandardElement = -1;}
 
 inline CSurfaceElementFEM::CSurfaceElementFEM(const CSurfaceElementFEM &other) { Copy(other); }
 

@@ -34,16 +34,16 @@
 #pragma once
 
 #include "../../Common/include/mpi_structure.hpp"
+#include "../../Common/include/config_structure.hpp"
+#include "../../Common/include/fem_geometry_structure.hpp"
 
 #include <iostream>
 #include <cmath>
 
-/* Classes from other parts of the code need to be forward declared */
-class CSolver;
-class CConfig;
-class CGeometry;
-
 using namespace std;
+
+// Forward declaration of class CSolver avoids circular dependency
+class CSolver;
 
 /*!
  * \class CSGSModel
@@ -54,6 +54,7 @@ using namespace std;
 class CWallModel {
 
 public:
+
   /*!
    * \brief Constructor of the class.
    */
@@ -68,11 +69,15 @@ public:
 
   virtual void ComputeWallHeatFlux();
 
-  virtual void Initialize(CGeometry *geometry, CConfig *config, CSolver *solver, unsigned short int thisMarker);
+  virtual void Initialize(CBoundaryFEM * boundary, CConfig *config, CGeometry *geometry);
 
-  virtual void SetUpExchange();
+  virtual void SetUpExchange(CBoundaryFEM * boundary, CConfig *config, CGeometry *geometry);
 
-  virtual void SetPoints();
+  virtual void SetPoints(CSurfaceElementFEM * thisElem, vector<su2double> exchangeCoords);
+
+protected:
+
+  su2double thickness; /*!< \brief The thickness of the wall model. This is also basically the exchange location */
 
 };
 
@@ -94,12 +99,22 @@ public:
 
   void ComputeWallHeatFlux();
 
-  void Initialize(CGeometry *geometry, CConfig *config, CSolver *solver, unsigned short int thisMarker);
+  void Initialize(CBoundaryFEM * boundary, CConfig *config, CGeometry *geometry);
 
-  void SetUpExchange();
+  void SetUpExchange(CBoundaryFEM * boundary, CConfig *config, CGeometry *geometry);
 
-  void SetPoints();
+  void SetPoints(CSurfaceElementFEM * thisElem, vector<su2double> exchangeCoords);
+
+  void SolveCoupledSystem(CSurfaceElementFEM * thisElem, su2double u_bc, su2double T_bc, su2double P_bc, su2double * wallShear, su2double * heatFlux);
+
+  void GetExchangeValues(unsigned short intPointID, su2double * u_exchange, su2double * T_exchange,  su2double * P_exchange);
+
+protected:
+
+  su2double expansionRatio;
+  unsigned short int numPoints;
+  bool initCondExists;
+  su2double tauWallInit;
 
 };
-
 

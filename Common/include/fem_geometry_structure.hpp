@@ -420,9 +420,12 @@ public:
                                                        points of the face. */
   vector<su2double> coorIntegrationPoints; /*!< \brief The coordinates of the integration points of the face. */
   vector<su2double> gridVelocities;         /*!< \brief Grid velocities in the integration points of this face. */
-  vector<su2double> wallDistance;          /*!< \brief The wall distances of the integration points
-                                                       of the face. */
+  vector<su2double> wallDistance;          /*!< \brief The wall distances of the integration points of the face. */
 
+  vector<su2double> wallModelPointCoords;  /*!< \brief The wall normal coordinates of the wall model points for this
+                                                       face. */
+
+  vector<unsigned long> exchangePointIDs; /*!< \brief A vector containing the exchange points for each surface DOF */
   /*!
    * \brief Constructor of the class. Initialize some variables.
    */
@@ -475,6 +478,13 @@ public:
   string markerTag;  /*!< \brief Marker tag of this boundary. */
 
   bool periodicBoundary; /*!< \brief Whether or not this boundary is a periodic boundary. */
+  bool wallModelBoundary; /*!< \brief Whether or not this boundary uses a wall model. */
+
+  unsigned short nWallModelPoints; /*!< \brief Number of wall model points used on this boundary. */
+
+  su2double wallModelThickness; /*!< \brief Thickness of the wall model used on this boundary. */
+
+  su2double wallModelExpansionRatio; /*!< \brief Expansion ratio for wall model points used on this boundary. */
 
   vector<unsigned long> nSurfElem; /*!< \brief Number of surface elements per time level,
                                                cumulative storage format. */
