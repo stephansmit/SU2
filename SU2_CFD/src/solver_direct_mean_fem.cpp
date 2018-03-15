@@ -10626,6 +10626,7 @@ void CFEM_DG_NSSolver::Shock_Capturing_DG(CConfig             *config,
   }
 
 }
+
 void CFEM_DG_NSSolver::Shock_Capturing_DG_Persson(const unsigned long elemBeg,
                                                   const unsigned long elemEnd) {
 
@@ -12334,7 +12335,6 @@ void CFEM_DG_NSSolver::TransformSymmetrizingFluxes(const unsigned short nInt,
     }
   }
 }
-
 
 void CFEM_DG_NSSolver::BC_Euler_Wall(CConfig                  *config,
                                      const unsigned long      surfElemBeg,

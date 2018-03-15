@@ -421,11 +421,9 @@ public:
   vector<su2double> coorIntegrationPoints; /*!< \brief The coordinates of the integration points of the face. */
   vector<su2double> gridVelocities;         /*!< \brief Grid velocities in the integration points of this face. */
   vector<su2double> wallDistance;          /*!< \brief The wall distances of the integration points of the face. */
-
-  vector<su2double> wallModelPointCoords;  /*!< \brief The wall normal coordinates of the wall model points for this
-                                                       face. */
-
+  vector<su2double> wallModelPoints;  /*!< \brief The wall normal coordinates of the wall model points for this face. */
   vector<unsigned long> exchangePointIDs; /*!< \brief A vector containing the exchange points for each surface DOF */
+
   /*!
    * \brief Constructor of the class. Initialize some variables.
    */

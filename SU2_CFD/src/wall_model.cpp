@@ -123,7 +123,7 @@ void CWallModel1DEQ::SetUpExchange(CBoundaryFEM * boundary, CConfig *config, CGe
     const unsigned short nDofsElement = curElem->DOFsSolElement.size();
     const unsigned long volID = curElem->volElemID;
 
-    // Set the size of the exchange point ID vector
+    // Set the size of the exchange point ID vector and initialize to zero
     curElem->exchangePointIDs.assign(nDofsFace,0);
 
     // Get the current face's corresponding volume element
@@ -132,23 +132,8 @@ void CWallModel1DEQ::SetUpExchange(CBoundaryFEM * boundary, CConfig *config, CGe
     // Get the current corresponding volume element's polynomial degree
     unsigned short nPoly = curVolume->nPolySol;
 
-    // Output for debugging
-    //std::cout << "iSurfElem, boundElemIDGlobal, volElemID, iDof, suface_DOFsSolElem, surface_DOFsSolFace, nPoly, x, y, z, wallDist" << std::endl;
-
     // Step through the dofs of the surface element
     for(unsigned short iDof = 0; iDof < nDofsFace; ++iDof){
-      // Output some information for debugging
-      //std::cout << iSurfElem << ", ";
-      //std::cout << curElem->boundElemIDGlobal << ", ";
-      //std::cout << volID << ", ";
-      //std::cout << iDof << ", ";
-      //std::cout << curElem->DOFsSolElement[iDof] << ", ";
-      //std::cout << nPoly << ", ";
-      //std::cout << curVolume->coorSolDOFs[iDof*nDim] << ", ";
-      //std::cout << curVolume->coorSolDOFs[iDof*nDim+1] << ", ";
-      //std::cout << curVolume->coorSolDOFs[iDof*nDim+2] << ", ";
-      //std::cout << curVolume->wallDistanceSolDOFs[iDof] << ", ";
-      //std::cout << std::endl;
 
       // Set the initial difference to be the specified thickness
       su2double difference = this->thickness;
@@ -156,7 +141,7 @@ void CWallModel1DEQ::SetUpExchange(CBoundaryFEM * boundary, CConfig *config, CGe
       // For each surface DOF, there will be nPoly solution DOFs "above" it in the wall-normal direction
       for(unsigned short i = 0; i < nPoly; ++i){
         // We want to look at the nPoly solution DOFs above the current surface DOF. These solution DOFs will be
-        // at the current index plus nPoly^2, 2*nPoly^2, 3*nPoly^2, etc in the vector.
+        // at the current index plus (nPoly+1)^2, 2*(nPoly+1)^2, 3*(nPoly+1)^2, etc in the vector.
 
         // Calculate the index of the ith solution DOF above the current surface DOF
         unsigned short thisSolDOFIndex = iDof + (i+1)*((nPoly+1)*(nPoly+1));
@@ -164,19 +149,11 @@ void CWallModel1DEQ::SetUpExchange(CBoundaryFEM * boundary, CConfig *config, CGe
         // Get the wall distance of this solution DOF
         su2double thisWallDist = curVolume->wallDistanceSolDOFs[thisSolDOFIndex];
 
-        // Output for debugging
-        if(iSurfElem == 0){
-          std::cout << "iDof = " << iDof << std::endl;
-          std::cout << "thisSolDofIndex = " << thisSolDOFIndex << std::endl;
-          std::cout << "thisWallDist = " << thisWallDist << std::endl;
-          std::cout << "difference = " << difference << std::endl;
-        }
         // Compare the wall distance of this DOF with that specified by the wall model for this wall
         // If the difference is smaller than the current difference, this point is closer to the specified
         // wall thickness
         if( fabs(this->thickness - thisWallDist) < difference ){
-          // Set the difference between the specified wall model thickness and this solution DOF to be the new
-          // difference
+          // Set the difference between the specified wall model thickness and this solution DOF to be the new difference
           difference = fabs(this->thickness - thisWallDist);
 
           // Set the current surface DOF's exchange point ID to that of the current solution DOF
@@ -184,36 +161,42 @@ void CWallModel1DEQ::SetUpExchange(CBoundaryFEM * boundary, CConfig *config, CGe
         }
       }
     }
-    // Output some info for debugging
-    std::cout << "Matching locations for DOFs on surface element " << iSurfElem << std::endl;
-    std::cout << "----------------------------------------------" << std::endl;
-    for(unsigned short iDof = 0; iDof < nDofsFace; ++iDof){
-      std::cout << "surface DOF " << iDof << " <---> " << curElem->exchangePointIDs[iDof] << " solution DOF" << std::endl;
-    }
-
+    su2double exchangeHeight = curVolume->wallDistanceSolDOFs[curElem->exchangePointIDs[0]];
+    this->SetPoints(curElem,exchangeHeight);
   }
 }
 
-void CWallModel1DEQ::SetPoints(CSurfaceElementFEM * thisElem, vector<su2double> exchangeCoords){
+void CWallModel1DEQ::SetPoints(CSurfaceElementFEM * thisElem, su2double exchangeHeight){
   /*--- Allocate memory/vector of wall model points for this element. This assumes that there is only
    * one vector of wall model points needed per cell. This assumption is based on the volume cell being
    * a regular hex or triangular prism, where the distances from each wall integration point to its
    * corresponding exchange locations is the same throughout this boundary cell. This may not be a good
    * assumption in general cases, but will work for plane channel flow for now. ---*/
 
-  thisElem->wallModelPointCoords.resize(this->numPoints);
+  thisElem->wallModelPoints.resize(this->numPoints);
 
   /*--- for now, we are just using the y-coordinate ---*/
   /*--- Use a geometric expansion to get wall model point coords between the wall and the exchange location ---*/
   /*--- Find the first cell thickness ---*/
-  su2double firstCellThickness = exchangeCoords[1] * (1 - this->expansionRatio) / (1 - std::pow(this->expansionRatio,this->numPoints-1));
+  su2double firstCellThickness = exchangeHeight * (1 - this->expansionRatio) / (1 - std::pow(this->expansionRatio,this->numPoints-1));
 
-  std::vector<su2double>::iterator pointIter;
-  unsigned short i = 0;
-  thisElem->wallModelPointCoords[0] = 0.0;
-  for(pointIter=thisElem->wallModelPointCoords.begin()+1; pointIter!=thisElem->wallModelPointCoords.end(); pointIter++){
-    *pointIter = *(pointIter-1) + firstCellThickness * std::pow(this->expansionRatio,i);
-    i++;
+  // Output for debugging
+  if(thisElem->boundElemIDGlobal == 0)
+  {
+    std::cout << "For boundElemIDGlobal = " << thisElem->boundElemIDGlobal << std::endl;
+    std::cout << "Specified WM thickness = " << this->thickness << std::endl;
+    std::cout << "Actual exchange wall distance = " << exchangeHeight << std::endl;
+  }
+
+  // Set first wall model point to be at the wall (y=0)
+  thisElem->wallModelPoints[0] = 0.0;
+  for(unsigned short iPoint = 1; iPoint < numPoints; ++iPoint){
+    thisElem->wallModelPoints[iPoint] = thisElem->wallModelPoints[iPoint-1] + firstCellThickness * std::pow(this->expansionRatio,iPoint-1);
+  }
+  if(thisElem->boundElemIDGlobal == 0){
+    for(unsigned short i = 0; i < numPoints; ++i){
+      std::cout << "y[" << i << "] = " << thisElem->wallModelPoints[i] << std::endl;
+    }
   }
 }
 

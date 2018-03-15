@@ -103,7 +103,7 @@ public:
 
   void SetUpExchange(CBoundaryFEM * boundary, CConfig *config, CGeometry *geometry);
 
-  void SetPoints(CSurfaceElementFEM * thisElem, vector<su2double> exchangeCoords);
+  void SetPoints(CSurfaceElementFEM * thisElem, su2double exchangeHeight);
 
   void SolveCoupledSystem(CSurfaceElementFEM * thisElem, su2double u_bc, su2double T_bc, su2double P_bc, su2double * wallShear, su2double * heatFlux);
 

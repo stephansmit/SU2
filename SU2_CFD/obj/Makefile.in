@@ -1154,11 +1154,9 @@ clean-noinstLIBRARIES:
 	../src/$(am__dirstamp) ../src/$(DEPDIR)/$(am__dirstamp)
 ../src/libSU2Core_a-variable_template.$(OBJEXT):  \
 	../src/$(am__dirstamp) ../src/$(DEPDIR)/$(am__dirstamp)
-<<<<<<< HEAD
-=======
 ../src/libSU2Core_a-wall_model.$(OBJEXT): ../src/$(am__dirstamp) \
 	../src/$(DEPDIR)/$(am__dirstamp)
->>>>>>> e2b292eec25909f5f0ebd4f2f0310cb3c05d3f0c
+
 
 libSU2Core.a: $(libSU2Core_a_OBJECTS) $(libSU2Core_a_DEPENDENCIES) $(EXTRA_libSU2Core_a_DEPENDENCIES) 
 	$(AM_V_at)-rm -f libSU2Core.a
@@ -1349,11 +1347,8 @@ clean-binPROGRAMS:
 	../src/$(am__dirstamp) ../src/$(DEPDIR)/$(am__dirstamp)
 ../src/___bin_SU2_CFD_AD-variable_template.$(OBJEXT):  \
 	../src/$(am__dirstamp) ../src/$(DEPDIR)/$(am__dirstamp)
-<<<<<<< HEAD
-=======
 ../src/___bin_SU2_CFD_AD-wall_model.$(OBJEXT): ../src/$(am__dirstamp) \
 	../src/$(DEPDIR)/$(am__dirstamp)
->>>>>>> e2b292eec25909f5f0ebd4f2f0310cb3c05d3f0c
 
 ../bin/SU2_CFD_AD$(EXEEXT): $(___bin_SU2_CFD_AD_OBJECTS) $(___bin_SU2_CFD_AD_DEPENDENCIES) $(EXTRA____bin_SU2_CFD_AD_DEPENDENCIES) ../bin/$(am__dirstamp)
 	@rm -f ../bin/SU2_CFD_AD$(EXEEXT)
@@ -1492,11 +1487,8 @@ clean-binPROGRAMS:
 	../src/$(am__dirstamp) ../src/$(DEPDIR)/$(am__dirstamp)
 ../src/___bin_SU2_CFD_DIRECTDIFF-variable_template.$(OBJEXT):  \
 	../src/$(am__dirstamp) ../src/$(DEPDIR)/$(am__dirstamp)
-<<<<<<< HEAD
-=======
 ../src/___bin_SU2_CFD_DIRECTDIFF-wall_model.$(OBJEXT):  \
 	../src/$(am__dirstamp) ../src/$(DEPDIR)/$(am__dirstamp)
->>>>>>> e2b292eec25909f5f0ebd4f2f0310cb3c05d3f0c
 
 ../bin/SU2_CFD_DIRECTDIFF$(EXEEXT): $(___bin_SU2_CFD_DIRECTDIFF_OBJECTS) $(___bin_SU2_CFD_DIRECTDIFF_DEPENDENCIES) $(EXTRA____bin_SU2_CFD_DIRECTDIFF_DEPENDENCIES) ../bin/$(am__dirstamp)
 	@rm -f ../bin/SU2_CFD_DIRECTDIFF$(EXEEXT)
@@ -4572,8 +4564,6 @@ distclean-compile:
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(___bin_SU2_CFD_DIRECTDIFF_CXXFLAGS) $(CXXFLAGS) -c -o ../src/___bin_SU2_CFD_DIRECTDIFF-variable_template.obj `if test -f '../src/variable_template.cpp'; then $(CYGPATH_W) '../src/variable_template.cpp'; else $(CYGPATH_W) '$(srcdir)/../src/variable_template.cpp'; fi`
 
-<<<<<<< HEAD
-=======
 ../src/___bin_SU2_CFD_DIRECTDIFF-wall_model.o: ../src/wall_model.cpp
 @am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(___bin_SU2_CFD_DIRECTDIFF_CXXFLAGS) $(CXXFLAGS) -MT ../src/___bin_SU2_CFD_DIRECTDIFF-wall_model.o -MD -MP -MF ../src/$(DEPDIR)/___bin_SU2_CFD_DIRECTDIFF-wall_model.Tpo -c -o ../src/___bin_SU2_CFD_DIRECTDIFF-wall_model.o `test -f '../src/wall_model.cpp' || echo '$(srcdir)/'`../src/wall_model.cpp
 @am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) ../src/$(DEPDIR)/___bin_SU2_CFD_DIRECTDIFF-wall_model.Tpo ../src/$(DEPDIR)/___bin_SU2_CFD_DIRECTDIFF-wall_model.Po
@@ -4588,7 +4578,6 @@ distclean-compile:
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(___bin_SU2_CFD_DIRECTDIFF_CXXFLAGS) $(CXXFLAGS) -c -o ../src/___bin_SU2_CFD_DIRECTDIFF-wall_model.obj `if test -f '../src/wall_model.cpp'; then $(CYGPATH_W) '../src/wall_model.cpp'; else $(CYGPATH_W) '$(srcdir)/../src/wall_model.cpp'; fi`
 
->>>>>>> e2b292eec25909f5f0ebd4f2f0310cb3c05d3f0c
 ID: $(am__tagged_files)
 	$(am__define_uniq_tagged_files); mkid -fID $$unique
 tags: tags-am
