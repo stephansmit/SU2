@@ -16302,6 +16302,107 @@ void CPhysicalGeometry::SetBoundTecPlot(char mesh_filename[MAX_STRING_SIZE], boo
   
 }
 
+void CPhysicalGeometry::SetParaView(char mesh_filename[MAX_STRING_SIZE], bool new_file) {
+
+  unsigned long iElem, iPoint, nElem_Storage, nTria, nQuad, nTetr, nHexa, nPris, nPyra;
+  unsigned short iDim;
+
+  /*--- Open Paraview ASCII file and write the header. ---*/
+
+  ofstream Paraview_File;
+  Paraview_File.open(mesh_filename, ios::out);
+  Paraview_File.precision(6);
+  Paraview_File << "# vtk DataFile Version 3.0\n";
+  Paraview_File << "vtk output\n";
+  Paraview_File << "ASCII\n";
+  Paraview_File << "DATASET UNSTRUCTURED_GRID\n";
+
+  Paraview_File << "POINTS "<< nPoint <<" float\n";
+
+  for (iPoint = 0; iPoint < nPoint; iPoint++) {
+    for (iDim = 0; iDim < nDim; iDim++)
+      Paraview_File << scientific << node[iPoint]->GetCoord(iDim) << "\t";
+    if (nDim == 2) Paraview_File << scientific << "0.0" << "\t";
+    Paraview_File << "\n";
+  }
+
+  nTria = 0; nQuad = 0; nTetr = 0; nHexa = 0; nPris = 0; nPyra = 0;
+  for (iElem = 0; iElem < nElem; iElem++) {
+    if (elem[iElem]->GetVTK_Type() == TRIANGLE)      nTria++;
+    if (elem[iElem]->GetVTK_Type() == QUADRILATERAL) nQuad++;
+    if (elem[iElem]->GetVTK_Type() == TETRAHEDRON)   nTetr++;
+    if (elem[iElem]->GetVTK_Type() == HEXAHEDRON)    nHexa++;
+    if (elem[iElem]->GetVTK_Type() == PRISM)         nPris++;
+    if (elem[iElem]->GetVTK_Type() == PYRAMID)       nPyra++;
+  }
+
+  nElem_Storage = nTria*4 + nQuad*5 + nTetr*5 + nHexa*9 + nPris*7 + nPyra*6;
+  Paraview_File << "\nCELLS " << nElem << "\t" << nElem_Storage << "\n";
+
+  for (iElem = 0; iElem < nElem; iElem++) {
+    if (elem[iElem]->GetVTK_Type() == TRIANGLE) {
+      Paraview_File << N_POINTS_TRIANGLE << "\t";
+      Paraview_File << elem[iElem]->GetNode(0) << "\t";
+      Paraview_File << elem[iElem]->GetNode(1) << "\t";
+      Paraview_File << elem[iElem]->GetNode(2) << "\t";
+    }
+    if (elem[iElem]->GetVTK_Type() == QUADRILATERAL) {
+      Paraview_File << N_POINTS_QUADRILATERAL << "\t";
+      Paraview_File << elem[iElem]->GetNode(0) << "\t";
+      Paraview_File << elem[iElem]->GetNode(1) << "\t";
+      Paraview_File << elem[iElem]->GetNode(2) << "\t";
+      Paraview_File << elem[iElem]->GetNode(3) << "\t";
+    }
+    if (elem[iElem]->GetVTK_Type() == TETRAHEDRON) {
+      Paraview_File << N_POINTS_TETRAHEDRON << "\t";
+      Paraview_File << elem[iElem]->GetNode(0) << "\t";
+      Paraview_File << elem[iElem]->GetNode(1) << "\t";
+      Paraview_File << elem[iElem]->GetNode(2) << "\t";
+      Paraview_File << elem[iElem]->GetNode(3) << "\t";
+    }
+    if (elem[iElem]->GetVTK_Type() == HEXAHEDRON) {
+      Paraview_File << N_POINTS_HEXAHEDRON << "\t";
+      Paraview_File << elem[iElem]->GetNode(0) << "\t";
+      Paraview_File << elem[iElem]->GetNode(1) << "\t";
+      Paraview_File << elem[iElem]->GetNode(2) << "\t";
+      Paraview_File << elem[iElem]->GetNode(3) << "\t";
+      Paraview_File << elem[iElem]->GetNode(4) << "\t";
+      Paraview_File << elem[iElem]->GetNode(5) << "\t";
+      Paraview_File << elem[iElem]->GetNode(6) << "\t";
+      Paraview_File << elem[iElem]->GetNode(7) << "\t";
+    }
+    if (elem[iElem]->GetVTK_Type() == PYRAMID) {
+      Paraview_File << N_POINTS_PYRAMID << "\t";
+      Paraview_File << elem[iElem]->GetNode(0) << "\t";
+      Paraview_File << elem[iElem]->GetNode(1) << "\t";
+      Paraview_File << elem[iElem]->GetNode(2) << "\t";
+      Paraview_File << elem[iElem]->GetNode(3) << "\t";
+      Paraview_File << elem[iElem]->GetNode(4) << "\t";
+    }
+    if (elem[iElem]->GetVTK_Type() == PRISM) {
+      Paraview_File << N_POINTS_PRISM << "\t";
+      Paraview_File << elem[iElem]->GetNode(0) << "\t";
+      Paraview_File << elem[iElem]->GetNode(1) << "\t";
+      Paraview_File << elem[iElem]->GetNode(2) << "\t";
+      Paraview_File << elem[iElem]->GetNode(3) << "\t";
+      Paraview_File << elem[iElem]->GetNode(4) << "\t";
+      Paraview_File << elem[iElem]->GetNode(5) << "\t";
+    }
+    Paraview_File << endl;
+  }
+
+  Paraview_File << "\nCELL_TYPES " << nElem << "\n";
+  for (iElem = 0; iElem < nElem; iElem++) {
+    if (elem[iElem]->GetVTK_Type() == TRIANGLE)      Paraview_File << "5\t";
+    if (elem[iElem]->GetVTK_Type() == QUADRILATERAL) Paraview_File << "9\t";
+    if (elem[iElem]->GetVTK_Type() == TETRAHEDRON)   Paraview_File << "10\t";
+    if (elem[iElem]->GetVTK_Type() == HEXAHEDRON)    Paraview_File << "12\t";
+    if (elem[iElem]->GetVTK_Type() == PRISM)         Paraview_File << "13\t";
+    if (elem[iElem]->GetVTK_Type() == PYRAMID)       Paraview_File << "14\t";
+  }
+  
+}
+
 void CPhysicalGeometry::SetColorGrid(CConfig *config) {
   
 #ifdef HAVE_MPI
@@ -22066,22 +22167,123 @@ void CPeriodicGeometry::SetTecPlot(char mesh_filename[MAX_STRING_SIZE], bool new
   Tecplot_File.close();
 }
 
+void CPeriodicGeometry::SetParaView(char mesh_filename[MAX_STRING_SIZE], bool new_file) {
+
+  unsigned long iElem, iPoint, nElem_Storage, nTria, nQuad, nTetr, nHexa, nPris, nPyra;
+  unsigned short iDim;
+
+  /*--- Open Paraview ASCII file and write the header. ---*/
+
+  ofstream Paraview_File;
+  Paraview_File.open(mesh_filename, ios::out);
+  Paraview_File.precision(6);
+  Paraview_File << "# vtk DataFile Version 3.0\n";
+  Paraview_File << "vtk output\n";
+  Paraview_File << "ASCII\n";
+  Paraview_File << "DATASET UNSTRUCTURED_GRID\n";
+
+  Paraview_File << "POINTS "<< nPoint <<" float\n";
+
+  for (iPoint = 0; iPoint < nPoint; iPoint++) {
+    for (iDim = 0; iDim < nDim; iDim++)
+      Paraview_File << scientific << node[iPoint]->GetCoord(iDim) << "\t";
+    if (nDim == 2) Paraview_File << scientific << "0.0" << "\t";
+    Paraview_File << "\n";
+  }
+
+  nTria = 0; nQuad = 0; nTetr = 0; nHexa = 0; nPris = 0; nPyra = 0;
+  for (iElem = 0; iElem < nElem; iElem++) {
+    if (elem[iElem]->GetVTK_Type() == TRIANGLE)      nTria++;
+    if (elem[iElem]->GetVTK_Type() == QUADRILATERAL) nQuad++;
+    if (elem[iElem]->GetVTK_Type() == TETRAHEDRON)   nTetr++;
+    if (elem[iElem]->GetVTK_Type() == HEXAHEDRON)    nHexa++;
+    if (elem[iElem]->GetVTK_Type() == PRISM)         nPris++;
+    if (elem[iElem]->GetVTK_Type() == PYRAMID)       nPyra++;
+  }
+
+  nElem_Storage = nTria*4 + nQuad*5 + nTetr*5 + nHexa*9 + nPris*7 + nPyra*6;
+  Paraview_File << "\nCELLS " << nElem << "\t" << nElem_Storage << "\n";
+
+  for (iElem = 0; iElem < nElem; iElem++) {
+    if (elem[iElem]->GetVTK_Type() == TRIANGLE) {
+      Paraview_File << N_POINTS_TRIANGLE << "\t";
+      Paraview_File << elem[iElem]->GetNode(0) << "\t";
+      Paraview_File << elem[iElem]->GetNode(1) << "\t";
+      Paraview_File << elem[iElem]->GetNode(2) << "\t";
+    }
+    if (elem[iElem]->GetVTK_Type() == QUADRILATERAL) {
+      Paraview_File << N_POINTS_QUADRILATERAL << "\t";
+      Paraview_File << elem[iElem]->GetNode(0) << "\t";
+      Paraview_File << elem[iElem]->GetNode(1) << "\t";
+      Paraview_File << elem[iElem]->GetNode(2) << "\t";
+      Paraview_File << elem[iElem]->GetNode(3) << "\t";
+    }
+    if (elem[iElem]->GetVTK_Type() == TETRAHEDRON) {
+      Paraview_File << N_POINTS_TETRAHEDRON << "\t";
+      Paraview_File << elem[iElem]->GetNode(0) << "\t";
+      Paraview_File << elem[iElem]->GetNode(1) << "\t";
+      Paraview_File << elem[iElem]->GetNode(2) << "\t";
+      Paraview_File << elem[iElem]->GetNode(3) << "\t";
+    }
+    if (elem[iElem]->GetVTK_Type() == HEXAHEDRON) {
+      Paraview_File << N_POINTS_HEXAHEDRON << "\t";
+      Paraview_File << elem[iElem]->GetNode(0) << "\t";
+      Paraview_File << elem[iElem]->GetNode(1) << "\t";
+      Paraview_File << elem[iElem]->GetNode(2) << "\t";
+      Paraview_File << elem[iElem]->GetNode(3) << "\t";
+      Paraview_File << elem[iElem]->GetNode(4) << "\t";
+      Paraview_File << elem[iElem]->GetNode(5) << "\t";
+      Paraview_File << elem[iElem]->GetNode(6) << "\t";
+      Paraview_File << elem[iElem]->GetNode(7) << "\t";
+    }
+    if (elem[iElem]->GetVTK_Type() == PYRAMID) {
+      Paraview_File << N_POINTS_PYRAMID << "\t";
+      Paraview_File << elem[iElem]->GetNode(0) << "\t";
+      Paraview_File << elem[iElem]->GetNode(1) << "\t";
+      Paraview_File << elem[iElem]->GetNode(2) << "\t";
+      Paraview_File << elem[iElem]->GetNode(3) << "\t";
+      Paraview_File << elem[iElem]->GetNode(4) << "\t";
+    }
+    if (elem[iElem]->GetVTK_Type() == PRISM) {
+      Paraview_File << N_POINTS_PRISM << "\t";
+      Paraview_File << elem[iElem]->GetNode(0) << "\t";
+      Paraview_File << elem[iElem]->GetNode(1) << "\t";
+      Paraview_File << elem[iElem]->GetNode(2) << "\t";
+      Paraview_File << elem[iElem]->GetNode(3) << "\t";
+      Paraview_File << elem[iElem]->GetNode(4) << "\t";
+      Paraview_File << elem[iElem]->GetNode(5) << "\t";
+    }
+    Paraview_File << endl;
+  }
+
+  Paraview_File << "\nCELL_TYPES " << nElem << "\n";
+  for (iElem = 0; iElem < nElem; iElem++) {
+    if (elem[iElem]->GetVTK_Type() == TRIANGLE)      Paraview_File << "5\t";
+    if (elem[iElem]->GetVTK_Type() == QUADRILATERAL) Paraview_File << "9\t";
+    if (elem[iElem]->GetVTK_Type() == TETRAHEDRON)   Paraview_File << "10\t";
+    if (elem[iElem]->GetVTK_Type() == HEXAHEDRON)    Paraview_File << "12\t";
+    if (elem[iElem]->GetVTK_Type() == PRISM)         Paraview_File << "13\t";
+    if (elem[iElem]->GetVTK_Type() == PYRAMID)       Paraview_File << "14\t";
+  }
+  
+}
+
 CMultiGridQueue::CMultiGridQueue(unsigned long val_npoint) {
   unsigned long iPoint;
-  
+
   nPoint = val_npoint;
   Priority = new short[nPoint];
   RightCV = new bool[nPoint];
-  
+
   QueueCV.resize(1);
-  
+
   /*--- Queue initialization with all the points in the finer grid ---*/
   for (iPoint = 0; iPoint < nPoint; iPoint ++) {
     QueueCV[0].push_back(iPoint);
     Priority[iPoint] = 0;
     RightCV[iPoint] = true;
   }
-  
+
 }
 
 CMultiGridQueue::~CMultiGridQueue(void) {

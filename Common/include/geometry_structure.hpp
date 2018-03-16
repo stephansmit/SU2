@@ -543,6 +543,12 @@ public:
 	 */
 	virtual void SetTecPlot(char config_filename[MAX_STRING_SIZE], bool new_file);
 
+  /*!
+   * \brief A virtual member.
+   * \param[in] config_filename - Name of the file where the ParaView information is going to be stored.
+   */
+  virtual void SetParaView(char config_filename[MAX_STRING_SIZE], bool new_file);
+
 	/*! 
 	 * \brief A virtual member.
    * \param[in] mesh_filename - Name of the file where the tecplot information is going to be stored.
@@ -1754,6 +1760,14 @@ void UpdateTurboVertex(CConfig *config,unsigned short val_iZone, unsigned short 
 	 */
 	void SetBoundTecPlot(char mesh_filename[MAX_STRING_SIZE], bool new_file, CConfig *config);
 
+  /*!
+   * \brief Set the ParaView file.
+   * \param[in] config_filename - Name of the file where the Tecplot
+   *            information is going to be stored.
+   * \param[in] new_file - Create a new file.
+   */
+  void SetParaView(char config_filename[MAX_STRING_SIZE], bool new_file);
+
 	/*! 
 	 * \brief Check the volume element orientation.
 	 * \param[in] config - Definition of the particular problem.		 
@@ -2547,6 +2561,13 @@ public:
 	 *            information is going to be stored.
 	 */
 	void SetTecPlot(char config_filename[MAX_STRING_SIZE], bool new_file);
+
+  /*!
+   * \brief Write a ParaView of the periodic mesh.
+   * \param[in] config_filename - Name of the file where the ParaView
+   *            information is going to be stored.
+   */
+  void SetParaView(char config_filename[MAX_STRING_SIZE], bool new_file);
 
 	/*! 
 	 * \brief Write the .su2 file.

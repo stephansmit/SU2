@@ -301,8 +301,13 @@ int main(int argc, char *argv[]) {
       geometry_container[ZONE_0]->SetPeriodicBoundary(config_container[ZONE_0]);
       
       /*--- Original grid for debugging purposes ---*/
-      
-      strcpy (file_name, "periodic_original.dat"); geometry_container[ZONE_0]->SetTecPlot(file_name, true);
+
+      if (config->GetOutput_FileFormat() == TECPLOT) {
+        strcpy (file_name, "periodic_original.dat"); geometry_container[ZONE_0]->SetTecPlot(file_name, true);
+      } else if (config->GetOutput_FileFormat() == PARAVIEW) {
+        cout << "first" << endl;
+        strcpy (file_name, "periodic_original.vtk"); geometry_container[ZONE_0]->SetParaView(file_name, true);
+      }
       
       /*--- Create a new grid with the right periodic boundary ---*/
       
@@ -311,11 +316,16 @@ int main(int argc, char *argv[]) {
       periodic->SetMeshFile(geometry_container[ZONE_0], config_container[ZONE_0], config_container[ZONE_0]->GetMesh_Out_FileName());
       
       /*--- Output of the grid for debuging purposes ---*/
-      
-      strcpy (file_name, "periodic_halo.dat"); periodic->SetTecPlot(file_name, true);
-      
+
+      if (config->GetOutput_FileFormat() == TECPLOT) {
+        strcpy (file_name, "periodic_halo.dat"); periodic->SetTecPlot(file_name, true);
+      } else if (config->GetOutput_FileFormat() == PARAVIEW) {
+        cout << "2" << endl;
+
+        strcpy (file_name, "periodic_halo.vtk"); periodic->SetParaView(file_name, true);
+      }
     }
-    
+
     if (config_container[ZONE_0]->GetKind_Adaptation() == NONE) {
       strcpy (file_name, "original_grid.dat");
       geometry_container[ZONE_0]->SetTecPlot(file_name, true);
