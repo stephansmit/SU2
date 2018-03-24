@@ -65,9 +65,9 @@ public:
    */
   virtual ~CWallModel(void);
 
-  virtual void ComputeWallShear();
+  virtual void ComputeWallShear(const unsigned short val_marker);
 
-  virtual void ComputeWallHeatFlux();
+  virtual void ComputeWallHeatFlux(const unsigned short val_marker);
 
   virtual void Initialize(CBoundaryFEM * boundary, CConfig *config, CGeometry *geometry);
 
@@ -95,9 +95,9 @@ public:
    */
   ~CWallModel1DEQ(void);
 
-  void ComputeWallShear();
+  void ComputeWallShear(const unsigned short val_marker);
 
-  void ComputeWallHeatFlux();
+  void ComputeWallHeatFlux(const unsigned short val_marker);
 
   void Initialize(CBoundaryFEM * boundary, CConfig *config, CGeometry *geometry);
 

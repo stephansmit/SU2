@@ -39,9 +39,9 @@ CWallModel::CWallModel(void){
 
 CWallModel::~CWallModel(void){}
 
-void CWallModel::ComputeWallShear(void){}
+void CWallModel::ComputeWallShear(const unsigned short val_marker){}
 
-void CWallModel::ComputeWallHeatFlux(void){}
+void CWallModel::ComputeWallHeatFlux(const unsigned short val_marker){}
 
 void CWallModel::Initialize(CBoundaryFEM * boundary, CConfig *config, CGeometry *geometry){}
 
@@ -56,9 +56,9 @@ CWallModel1DEQ::CWallModel1DEQ(void) : CWallModel(){
 
 CWallModel1DEQ::~CWallModel1DEQ(void){}
 
-void CWallModel1DEQ::ComputeWallShear(void){}
+void CWallModel1DEQ::ComputeWallShear(const unsigned short val_marker){}
 
-void CWallModel1DEQ::ComputeWallHeatFlux(void){}
+void CWallModel1DEQ::ComputeWallHeatFlux(const unsigned short val_marker){}
 
 void CWallModel1DEQ::Initialize(CBoundaryFEM * boundary, CConfig *config, CGeometry *geometry){
 

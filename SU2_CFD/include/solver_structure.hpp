@@ -14843,6 +14843,7 @@ private:
                                         which is needed for other terms in the discretization.
    */
   void ViscousNormalFluxFace(CConfig                 *config,
+                             const short    val_marker,
                              const CVolumeElementFEM *adjVolElem,
                              const unsigned short    timeLevelFace,
                              const unsigned short    nInt,
@@ -14880,6 +14881,7 @@ private:
    * \param[out] normalFlux        - Viscous normal flux, to be computed.
    */
   void ViscousNormalFluxIntegrationPoint_2D(const su2double *sol,
+                                            const short val_marker,
                                             const su2double solGradCart[4][2],
                                             const su2double *normal,
                                             const su2double HeatFlux,
@@ -14912,6 +14914,7 @@ private:
    * \param[out] normalFlux        - Viscous normal flux, to be computed.
    */
   void ViscousNormalFluxIntegrationPoint_3D(const su2double *sol,
+                                            const short val_marker,
                                             const su2double solGradCart[5][3],
                                             const su2double *normal,
                                             const su2double HeatFlux,
