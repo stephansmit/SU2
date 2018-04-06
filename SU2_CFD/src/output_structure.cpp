@@ -5558,6 +5558,11 @@ void COutput::SetConvHistory_Body(ofstream *ConvHist_file,
               cout <<   ")." << endl;
             }
 
+              if (incompressible) {
+                cout <<"Maximum Inviscid Beta2 " << config[val_iZone]->GetMax_Beta_Inv();
+                if (config[val_iZone]->GetViscous()) cout << ", maximum Viscous Beta2 " << config[val_iZone]->GetMax_Beta_Visc();
+                cout << "." << endl;
+              }
             /*--- Print out the number of non-physical points and reconstructions ---*/
 
             if (config[val_iZone]->GetNonphysical_Points() > 0)
@@ -5625,6 +5630,9 @@ void COutput::SetConvHistory_Body(ofstream *ConvHist_file,
             }
             cout <<"Maximum Omega " << solver_container[val_iZone][FinestMesh][FLOW_SOL]->GetOmega_Max() << ", maximum Strain Rate " << solver_container[val_iZone][FinestMesh][FLOW_SOL]->GetStrainMag_Max() << "." << endl;
 
+              if (incompressible) {
+                cout <<"Maximum Inviscid Beta2 " << config[val_iZone]->GetMax_Beta_Inv() << ", maximum Viscous Beta2 " << config[val_iZone]->GetMax_Beta_Visc() << "." << endl;
+              }
             /*--- Print out the number of non-physical points and reconstructions ---*/
             if (config[val_iZone]->GetNonphysical_Points() > 0)
               cout << "There are " << config[val_iZone]->GetNonphysical_Points() << " non-physical points in the solution." << endl;
@@ -12761,7 +12769,26 @@ void COutput::LoadLocalData_IncFlow(CConfig *config, CGeometry *geometry, CSolve
 
     nVar_Par += 1;
     Variable_Names.push_back("Density");
+    
+    nVar_Par += 1;
+    Variable_Names.push_back("StrainMag");
+    
+    nVar_Par += 1;
+    Variable_Names.push_back("Rotation");
+    
+    nVar_Par += 1;
+    Variable_Names.push_back("Divergence");
 
+    nVar_Par += 1;
+    Variable_Names.push_back("F1Blending");
+    nVar_Par += 1;
+    Variable_Names.push_back("F2Blending");
+    
+    nVar_Par += 1;
+    Variable_Names.push_back("Beta2");
+    
+    nVar_Par += 1;
+    Variable_Names.push_back("CrossDiffusion");
   }
 
   /*--- Auxiliary vectors for variables defined on surfaces only. ---*/
@@ -12989,6 +13016,25 @@ void COutput::LoadLocalData_IncFlow(CConfig *config, CGeometry *geometry, CSolve
 
         Local_Data[jPoint][iVar] = solver[FLOW_SOL]->node[iPoint]->GetDensity(); iVar++;
 
+        Local_Data[jPoint][iVar] = solver[FLOW_SOL]->node[iPoint]->GetStrainMag(); iVar++;
+        
+        su2double *Vorticity = solver[FLOW_SOL]->node[iPoint]->GetVorticity();
+        su2double Omega = sqrt(Vorticity[0]*Vorticity[0]+ Vorticity[1]*Vorticity[1]+ Vorticity[2]*Vorticity[2]);
+        
+        Local_Data[jPoint][iVar] = Omega; iVar++;
+        
+        su2double diverg = 0.0;
+        for (iDim = 0; iDim < nDim; iDim++)
+          diverg += solver[FLOW_SOL]->node[iPoint]->GetGradient_Primitive()[iDim+1][iDim];
+        
+        Local_Data[jPoint][iVar] = diverg; iVar++;
+        
+        Local_Data[jPoint][iVar] = solver[TURB_SOL]->node[iPoint]->GetF1blending(); iVar++;
+        Local_Data[jPoint][iVar] = solver[TURB_SOL]->node[iPoint]->GetF2blending(); iVar++;
+        
+        Local_Data[jPoint][iVar] = solver[FLOW_SOL]->node[iPoint]->GetBetaInc2(); iVar++;
+        
+        Local_Data[jPoint][iVar] = solver[TURB_SOL]->node[iPoint]->GetCrossDiff(); iVar++;
       }
 
       /*--- Increment the point counter, as there may have been halos we

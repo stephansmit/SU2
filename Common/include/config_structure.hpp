@@ -1001,6 +1001,8 @@ private:
   su2double *Body_Force_Vector;  /*!< \brief Values of the prescribed body force vector. */
   su2double *FreeStreamTurboNormal; /*!< \brief Direction to initialize the flow in turbomachinery computation */
   su2double Max_Beta; /*!< \brief Maximum Beta parameter (artificial compressibility) in the domain */
+  su2double Max_Beta_Inv; /*!< \brief Inviscid maximum Beta parameter (artificial compressibility) in the domain */
+  su2double Max_Beta_Visc; /*!< \brief Viscous maximum Beta parameter (artificial compressibility) in the domain */
 
   /*--- all_options is a map containing all of the options. This is used during config file parsing
    to track the options which have not been set (so the default values can be used). Without this map
@@ -8306,7 +8308,31 @@ public:
    * \return Value of the max Beta parameter (artificial compressibility) in the domain.
    */
   su2double GetMax_Beta(void);
+  
+  /*!
+   * \brief Set the inviscid maximum Beta parameter (artificial compressibility) in the domain.
+   * \param[in] Value of the inviscid max Beta parameter (artificial compressibility).
+   */
+  void SetMax_Beta_Inv(su2double val_maxBeta);
+  
+  /*!
+   * \brief Get the inviscid maximum Beta parameter (artificial compressibility) in the domain.
+   * \return Value of the inviscid max Beta parameter (artificial compressibility) in the domain.
+   */
+  su2double GetMax_Beta_Inv(void);
 
+  /*!
+   * \brief Set the viscous maximum Beta parameter (artificial compressibility) in the domain.
+   * \param[in] Value of the viscous max Beta parameter (artificial compressibility).
+   */
+  void SetMax_Beta_Visc(su2double val_maxBeta);
+  
+  /*!
+   * \brief Get the viscous maximum Beta parameter (artificial compressibility) in the domain.
+   * \return Value of the viscous max Beta parameter (artificial compressibility) in the domain.
+   */
+  su2double GetMax_Beta_Visc(void);
+  
   /*!
    * \brief Get the frequency for writing the surface solution file in Dual Time.
    * \return It writes the surface solution file with this frequency.

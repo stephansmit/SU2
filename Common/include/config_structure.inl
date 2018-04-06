@@ -1856,6 +1856,14 @@ inline void CConfig::SetMax_Beta(su2double val_Max_Beta) { Max_Beta = val_Max_Be
 
 inline su2double CConfig::GetMax_Beta(void) { return Max_Beta; }
 
+inline void CConfig::SetMax_Beta_Inv(su2double val_Max_Beta) { Max_Beta_Inv = val_Max_Beta; }
+
+inline su2double CConfig::GetMax_Beta_Inv(void) { return Max_Beta_Inv; }
+
+inline void CConfig::SetMax_Beta_Visc(su2double val_Max_Beta) { Max_Beta_Visc = val_Max_Beta; }
+
+inline su2double CConfig::GetMax_Beta_Visc(void) { return Max_Beta_Visc; }
+
 inline unsigned long CConfig::GetWrt_Surf_Freq_DualTime(void) { return Wrt_Surf_Freq_DualTime; }
 
 inline unsigned short CConfig::GetKind_HybridRANSLES(void) {return Kind_HybridRANSLES; }

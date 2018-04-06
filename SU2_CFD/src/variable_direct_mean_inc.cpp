@@ -469,9 +469,9 @@ bool CIncNSVariable::SetStrainMag(void) {
   AD::SetPreaccIn(Gradient_Primitive, nDim+1, nDim);
 
   Div = 0.0;
-  for (iDim = 0; iDim < nDim; iDim++) {
-    Div += Gradient_Primitive[iDim+1][iDim];
-  }
+  //for (iDim = 0; iDim < nDim; iDim++) {
+  //  Div += Gradient_Primitive[iDim+1][iDim];
+ // }
   
   StrainMag = 0.0;
   
