@@ -1885,60 +1885,100 @@ void CNumerics::GetViscousArtCompProjFlux(su2double *val_primvar,
   Density = val_primvar[nDim+2];
 
   total_viscosity = (val_laminar_viscosity + val_eddy_viscosity);
-
-  /*--- The full stress tensor is needed for variable density, as nabla.u != 0 ---*/
   
-  div_vel = 0.0;
-  for (iDim = 0 ; iDim < nDim; iDim++)
-    div_vel += val_gradprimvar[iDim+1][iDim];
-
-  for (iDim = 0 ; iDim < nDim; iDim++)
-    for (jDim = 0 ; jDim < nDim; jDim++)
-      tau[iDim][jDim] = (total_viscosity*(val_gradprimvar[jDim+1][iDim] +
-                                          val_gradprimvar[iDim+1][jDim] )
-                         -TWO3*total_viscosity*div_vel*delta[iDim][jDim]
-                         -TWO3*Density*val_turb_ke*delta[iDim][jDim]);
-
-  /*--- Gradient of primitive variables -> [Pressure vel_x vel_y vel_z Temperature] ---*/
-
-  if (nDim == 2) {
+  if (nDim == 3) {
     Flux_Tensor[0][0] = 0.0;
-    Flux_Tensor[1][0] = tau[0][0];
-    Flux_Tensor[2][0] = tau[0][1];
-    Flux_Tensor[3][0] = val_thermal_conductivity*val_gradprimvar[nDim+1][0];
-
-    Flux_Tensor[0][1] = 0.0;
-    Flux_Tensor[1][1] = tau[1][0];
-    Flux_Tensor[2][1] = tau[1][1];
-    Flux_Tensor[3][1] = val_thermal_conductivity*val_gradprimvar[nDim+1][1];
-
-  } else {
-
-    Flux_Tensor[0][0] = 0.0;
-    Flux_Tensor[1][0] = tau[0][0];
-    Flux_Tensor[2][0] = tau[0][1];
-    Flux_Tensor[3][0] = tau[0][2];
+    Flux_Tensor[1][0] = total_viscosity * val_gradprimvar[1][0] - TWO3*Density*val_turb_ke;
+    Flux_Tensor[2][0] = total_viscosity * val_gradprimvar[2][0];
+    Flux_Tensor[3][0] = total_viscosity * val_gradprimvar[3][0];
     Flux_Tensor[4][0] = val_thermal_conductivity*val_gradprimvar[nDim+1][0];
 
     Flux_Tensor[0][1] = 0.0;
-    Flux_Tensor[1][1] = tau[1][0];
-    Flux_Tensor[2][1] = tau[1][1];
-    Flux_Tensor[3][1] = tau[1][2];
+    Flux_Tensor[1][1] = total_viscosity * val_gradprimvar[1][1];
+    Flux_Tensor[2][1] = total_viscosity * val_gradprimvar[2][1] - TWO3*Density*val_turb_ke;
+    Flux_Tensor[3][1] = total_viscosity * val_gradprimvar[3][1];
     Flux_Tensor[4][1] = val_thermal_conductivity*val_gradprimvar[nDim+1][1];
 
     Flux_Tensor[0][2] = 0.0;
-    Flux_Tensor[1][2] = tau[2][0];
-    Flux_Tensor[2][2] = tau[2][1];
-    Flux_Tensor[3][2] = tau[2][2];
+    Flux_Tensor[1][2] = total_viscosity * val_gradprimvar[1][2];
+    Flux_Tensor[2][2] = total_viscosity * val_gradprimvar[2][2];
+    Flux_Tensor[3][2] = total_viscosity * val_gradprimvar[3][2] - TWO3*Density*val_turb_ke;
     Flux_Tensor[4][2] = val_thermal_conductivity*val_gradprimvar[nDim+1][2];
 
   }
+  
+  if (nDim == 2) {
+    Flux_Tensor[0][0] = 0.0;
+    Flux_Tensor[1][0] = total_viscosity * val_gradprimvar[1][0] - TWO3*Density*val_turb_ke;
+    Flux_Tensor[2][0] = total_viscosity * val_gradprimvar[2][0];
+    Flux_Tensor[3][0] = val_thermal_conductivity*val_gradprimvar[nDim+1][0];
 
+    Flux_Tensor[0][1] = 0.0;
+    Flux_Tensor[1][1] = total_viscosity * val_gradprimvar[1][1];
+    Flux_Tensor[2][1] = total_viscosity * val_gradprimvar[2][1] -TWO3*Density*val_turb_ke;
+    Flux_Tensor[3][1] = val_thermal_conductivity*val_gradprimvar[nDim+1][1];
+
+  }
+  
   for (iVar = 0; iVar < nVar; iVar++) {
     Proj_Flux_Tensor[iVar] = 0.0;
     for (iDim = 0; iDim < nDim; iDim++)
       Proj_Flux_Tensor[iVar] += Flux_Tensor[iVar][iDim] * val_normal[iDim];
   }
+
+//  /*--- The full stress tensor is needed for variable density, as nabla.u != 0 ---*/
+//
+//  div_vel = 0.0;
+//  for (iDim = 0 ; iDim < nDim; iDim++)
+//    div_vel += val_gradprimvar[iDim+1][iDim];
+//
+//  for (iDim = 0 ; iDim < nDim; iDim++)
+//    for (jDim = 0 ; jDim < nDim; jDim++)
+//      tau[iDim][jDim] = (total_viscosity*(val_gradprimvar[jDim+1][iDim] +
+//                                          val_gradprimvar[iDim+1][jDim] )
+//                         -TWO3*total_viscosity*div_vel*delta[iDim][jDim]
+//                         -TWO3*Density*val_turb_ke*delta[iDim][jDim]);
+//
+//  /*--- Gradient of primitive variables -> [Pressure vel_x vel_y vel_z Temperature] ---*/
+//
+//  if (nDim == 2) {
+//    Flux_Tensor[0][0] = 0.0;
+//    Flux_Tensor[1][0] = tau[0][0];
+//    Flux_Tensor[2][0] = tau[0][1];
+//    Flux_Tensor[3][0] = val_thermal_conductivity*val_gradprimvar[nDim+1][0];
+//
+//    Flux_Tensor[0][1] = 0.0;
+//    Flux_Tensor[1][1] = tau[1][0];
+//    Flux_Tensor[2][1] = tau[1][1];
+//    Flux_Tensor[3][1] = val_thermal_conductivity*val_gradprimvar[nDim+1][1];
+//
+//  } else {
+//
+//    Flux_Tensor[0][0] = 0.0;
+//    Flux_Tensor[1][0] = tau[0][0];
+//    Flux_Tensor[2][0] = tau[0][1];
+//    Flux_Tensor[3][0] = tau[0][2];
+//    Flux_Tensor[4][0] = val_thermal_conductivity*val_gradprimvar[nDim+1][0];
+//
+//    Flux_Tensor[0][1] = 0.0;
+//    Flux_Tensor[1][1] = tau[1][0];
+//    Flux_Tensor[2][1] = tau[1][1];
+//    Flux_Tensor[3][1] = tau[1][2];
+//    Flux_Tensor[4][1] = val_thermal_conductivity*val_gradprimvar[nDim+1][1];
+//
+//    Flux_Tensor[0][2] = 0.0;
+//    Flux_Tensor[1][2] = tau[2][0];
+//    Flux_Tensor[2][2] = tau[2][1];
+//    Flux_Tensor[3][2] = tau[2][2];
+//    Flux_Tensor[4][2] = val_thermal_conductivity*val_gradprimvar[nDim+1][2];
+//
+//  }
+//
+//  for (iVar = 0; iVar < nVar; iVar++) {
+//    Proj_Flux_Tensor[iVar] = 0.0;
+//    for (iDim = 0; iDim < nDim; iDim++)
+//      Proj_Flux_Tensor[iVar] += Flux_Tensor[iVar][iDim] * val_normal[iDim];
+//  }
 
 }
 
