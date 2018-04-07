@@ -3331,11 +3331,11 @@ CTurbSSTSolver::CTurbSSTSolver(CGeometry *geometry, CConfig *config, unsigned sh
   lowerlimit = new su2double[nVar];
   upperlimit = new su2double[nVar];
   
-  lowerlimit[0] = 1.0e-30;
-  upperlimit[0] = 1.0e30;
+  lowerlimit[0] = 1.0e-15;
+  upperlimit[0] = 1.0e15;
   
-  lowerlimit[1] = 1.0e-30;
-  upperlimit[1] = 1.0e30;
+  lowerlimit[1] = 1.0e-15;
+  upperlimit[1] = 1.0e15;
   
   /*--- Far-field flow state quantities and initialization. ---*/
   su2double rhoInf, *VelInf, muLamInf, Intensity, viscRatio, muT_Inf;
