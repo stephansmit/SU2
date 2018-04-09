@@ -12534,7 +12534,7 @@ void COutput::LoadLocalData_Flow(CConfig *config, CGeometry *geometry, CSolver *
 
 void COutput::LoadLocalData_IncFlow(CConfig *config, CGeometry *geometry, CSolver **solver, unsigned short val_iZone) {
 
-  unsigned short iDim;
+  unsigned short iDim, jDim;
   unsigned short Kind_Solver = config->GetKind_Solver();
   unsigned short nDim = geometry->GetnDim();
 
@@ -12774,7 +12774,7 @@ void COutput::LoadLocalData_IncFlow(CConfig *config, CGeometry *geometry, CSolve
     Variable_Names.push_back("StrainMag");
     
     nVar_Par += 1;
-    Variable_Names.push_back("Rotation");
+    Variable_Names.push_back("RotationMag");
     
     nVar_Par += 1;
     Variable_Names.push_back("Divergence");
@@ -12789,6 +12789,39 @@ void COutput::LoadLocalData_IncFlow(CConfig *config, CGeometry *geometry, CSolve
     
     nVar_Par += 1;
     Variable_Names.push_back("CrossDiffusion");
+    
+    nVar_Par += 1;
+    Variable_Names.push_back("dudx");
+    
+    nVar_Par += 1;
+    Variable_Names.push_back("dudy");
+    
+    if (nDim == 3) {
+      nVar_Par += 1;
+      Variable_Names.push_back("dudz");
+    }
+    
+    nVar_Par += 1;
+    Variable_Names.push_back("dvdx");
+    
+    nVar_Par += 1;
+    Variable_Names.push_back("dvdy");
+    
+    if (nDim == 3) {
+      nVar_Par += 1;
+      Variable_Names.push_back("dvdz");
+    }
+    
+    if (nDim == 3) {
+      nVar_Par += 1;
+      Variable_Names.push_back("dwdx");
+      
+      nVar_Par += 1;
+      Variable_Names.push_back("dwdy");
+      
+      nVar_Par += 1;
+      Variable_Names.push_back("dwdz");
+    }
   }
 
   /*--- Auxiliary vectors for variables defined on surfaces only. ---*/
@@ -13035,6 +13068,14 @@ void COutput::LoadLocalData_IncFlow(CConfig *config, CGeometry *geometry, CSolve
         Local_Data[jPoint][iVar] = solver[FLOW_SOL]->node[iPoint]->GetBetaInc2(); iVar++;
         
         Local_Data[jPoint][iVar] = solver[TURB_SOL]->node[iPoint]->GetCrossDiff(); iVar++;
+        
+        for (iDim = 0; iDim < nDim; iDim++) {
+          for (jDim = 0; jDim < nDim; jDim++) {
+          Local_Data[jPoint][iVar]= solver[FLOW_SOL]->node[iPoint]->GetGradient_Primitive()[iDim+1][jDim];
+            iVar++;
+        }
+      }
+      
       }
 
       /*--- Increment the point counter, as there may have been halos we
