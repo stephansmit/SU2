@@ -1157,7 +1157,6 @@ clean-noinstLIBRARIES:
 ../src/libSU2Core_a-wall_model.$(OBJEXT): ../src/$(am__dirstamp) \
 	../src/$(DEPDIR)/$(am__dirstamp)
 
-
 libSU2Core.a: $(libSU2Core_a_OBJECTS) $(libSU2Core_a_DEPENDENCIES) $(EXTRA_libSU2Core_a_DEPENDENCIES) 
 	$(AM_V_at)-rm -f libSU2Core.a
 	$(AM_V_AR)$(libSU2Core_a_AR) libSU2Core.a $(libSU2Core_a_OBJECTS) $(libSU2Core_a_LIBADD)

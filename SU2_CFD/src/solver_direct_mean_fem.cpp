@@ -11621,7 +11621,7 @@ void CFEM_DG_NSSolver::ViscousNormalFluxFace(CConfig                 *config,
 
         su2double Viscosity, kOverCv;
 
-        ViscousNormalFluxIntegrationPoint_2D(sol, val_marker, solGradCart, normal, HeatFlux,
+        ViscousNormalFluxIntegrationPoint_2D(sol, config, val_marker, solGradCart, normal, HeatFlux,
                                              factHeatFlux_Lam, factHeatFlux_Turb,
                                              wallDist, lenScale_LES,
                                              Viscosity, kOverCv, normalFlux);
@@ -11693,7 +11693,7 @@ void CFEM_DG_NSSolver::ViscousNormalFluxFace(CConfig                 *config,
 
         su2double Viscosity, kOverCv;
 
-        ViscousNormalFluxIntegrationPoint_3D(sol, val_marker, solGradCart, normal, HeatFlux,
+        ViscousNormalFluxIntegrationPoint_3D(sol, config, val_marker, solGradCart, normal, HeatFlux,
                                              factHeatFlux_Lam, factHeatFlux_Turb,
                                              wallDist, lenScale_LES,
                                              Viscosity, kOverCv, normalFlux);
@@ -11707,6 +11707,7 @@ void CFEM_DG_NSSolver::ViscousNormalFluxFace(CConfig                 *config,
 }
 
 void CFEM_DG_NSSolver::ViscousNormalFluxIntegrationPoint_2D(const su2double *sol,
+                                                            CConfig * config,
                                                             const short     val_marker,
                                                             const su2double solGradCart[4][2],
                                                             const su2double *normal,
@@ -11772,6 +11773,7 @@ void CFEM_DG_NSSolver::ViscousNormalFluxIntegrationPoint_2D(const su2double *sol
   /*--- Determine if we are operating on a valid boundary (val_marker != -1) ---*/
   if(val_marker >= 0){
     boundary = &(this->boundaries[val_marker]);
+    std::cout << "val_marker " << val_marker << "is boundary: " << boundary->markerTag << std::endl;
     isWallModelUsed = boundary->wallModelBoundary;
   }
 
@@ -11802,13 +11804,12 @@ void CFEM_DG_NSSolver::ViscousNormalFluxIntegrationPoint_2D(const su2double *sol
   /* If a wall model is used, then call the wall model routines to calculate wall shear stress and
      flux values.*/
   else if(isWallModelUsed == true){
-
     this->wallModel[val_marker]->ComputeWallShear(val_marker);
-
   }
 }
 
 void CFEM_DG_NSSolver::ViscousNormalFluxIntegrationPoint_3D(const su2double *sol,
+                                                            CConfig * config,
                                                             const short     val_marker,
                                                             const su2double solGradCart[5][3],
                                                             const su2double *normal,
@@ -11879,35 +11880,52 @@ void CFEM_DG_NSSolver::ViscousNormalFluxIntegrationPoint_3D(const su2double *sol
   const su2double lambda     = -TWO3*Viscosity;
   const su2double lamDivTerm =  lambda*divVel;
 
-  /*--- Compute the viscous stress tensor and minus the heatflux vector. ---*/
-  const su2double tauxx = 2.0*Viscosity*dudx + lamDivTerm;
-  const su2double tauyy = 2.0*Viscosity*dvdy + lamDivTerm;
-  const su2double tauzz = 2.0*Viscosity*dwdz + lamDivTerm;
+  /*--- Setup a boundary pointer and determine if a wall model is used---*/
+  CBoundaryFEM * boundary = NULL;
+  bool isWallModelUsed = false;
 
-  const su2double tauxy = Viscosity*(dudy + dvdx);
-  const su2double tauxz = Viscosity*(dudz + dwdx);
-  const su2double tauyz = Viscosity*(dvdz + dwdy);
+  /*--- Determine if we are operating on a valid boundary (val_marker != -1) ---*/
+  if(val_marker >= 0){
+    boundary = &(this->boundaries[val_marker]);
+    isWallModelUsed = boundary->wallModelBoundary;
+  }
 
-  const su2double qx = kOverCv*dStaticEnergyDx;
-  const su2double qy = kOverCv*dStaticEnergyDy;
-  const su2double qz = kOverCv*dStaticEnergyDz;
+  if( isWallModelUsed == false){
+    /*--- Compute the viscous stress tensor and minus the heatflux vector. ---*/
+    const su2double tauxx = 2.0*Viscosity*dudx + lamDivTerm;
+    const su2double tauyy = 2.0*Viscosity*dvdy + lamDivTerm;
+    const su2double tauzz = 2.0*Viscosity*dwdz + lamDivTerm;
 
-  /* Compute the unscaled normal vector. */
-  const su2double nx = normal[0]*normal[3];
-  const su2double ny = normal[1]*normal[3];
-  const su2double nz = normal[2]*normal[3];
+    const su2double tauxy = Viscosity*(dudy + dvdx);
+    const su2double tauxz = Viscosity*(dudz + dwdx);
+    const su2double tauyz = Viscosity*(dvdz + dwdy);
 
-  /*--- Compute the viscous normal flux. Note that the energy flux get a
-        contribution from both the prescribed and the computed heat flux.
-        At least one of these terms is zero. ---*/
-  normalFlux[0] = 0.0;
-  normalFlux[1] = tauxx*nx + tauxy*ny + tauxz*nz;
-  normalFlux[2] = tauxy*nx + tauyy*ny + tauyz*nz;
-  normalFlux[3] = tauxz*nx + tauyz*ny + tauzz*nz;
-  normalFlux[4] = normal[3]*HeatFlux
-                + (u*tauxx + v*tauxy + w*tauxz + qx)*nx
-                + (u*tauxy + v*tauyy + w*tauyz + qy)*ny
-                + (u*tauxz + v*tauyz + w*tauzz + qz)*nz;
+    const su2double qx = kOverCv*dStaticEnergyDx;
+    const su2double qy = kOverCv*dStaticEnergyDy;
+    const su2double qz = kOverCv*dStaticEnergyDz;
+
+    /* Compute the unscaled normal vector. */
+    const su2double nx = normal[0]*normal[3];
+    const su2double ny = normal[1]*normal[3];
+    const su2double nz = normal[2]*normal[3];
+
+    /*--- Compute the viscous normal flux. Note that the energy flux get a
+          contribution from both the prescribed and the computed heat flux.
+          At least one of these terms is zero. ---*/
+    normalFlux[0] = 0.0;
+    normalFlux[1] = tauxx*nx + tauxy*ny + tauxz*nz;
+    normalFlux[2] = tauxy*nx + tauyy*ny + tauyz*nz;
+    normalFlux[3] = tauxz*nx + tauyz*ny + tauzz*nz;
+    normalFlux[4] = normal[3]*HeatFlux
+                  + (u*tauxx + v*tauxy + w*tauxz + qx)*nx
+                  + (u*tauxy + v*tauyy + w*tauyz + qy)*ny
+                  + (u*tauxz + v*tauyz + w*tauzz + qz)*nz;
+  }
+  /* If a wall model is used, then call the wall model routines to calculate wall shear stress and
+     flux values.*/
+  else if(isWallModelUsed == true){
+    this->wallModel[val_marker]->ComputeWallShear(val_marker);
+  }
 }
 
 void CFEM_DG_NSSolver::PenaltyTermsFluxFace(const unsigned short nInt,

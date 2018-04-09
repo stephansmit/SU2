@@ -14881,6 +14881,7 @@ private:
    * \param[out] normalFlux        - Viscous normal flux, to be computed.
    */
   void ViscousNormalFluxIntegrationPoint_2D(const su2double *sol,
+                                            CConfig * config,
                                             const short val_marker,
                                             const su2double solGradCart[4][2],
                                             const su2double *normal,
@@ -14914,6 +14915,7 @@ private:
    * \param[out] normalFlux        - Viscous normal flux, to be computed.
    */
   void ViscousNormalFluxIntegrationPoint_3D(const su2double *sol,
+                                            CConfig * config,
                                             const short val_marker,
                                             const su2double solGradCart[5][3],
                                             const su2double *normal,

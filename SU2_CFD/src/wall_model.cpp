@@ -39,9 +39,9 @@ CWallModel::CWallModel(void){
 
 CWallModel::~CWallModel(void){}
 
-void CWallModel::ComputeWallShear(const unsigned short val_marker){}
+void CWallModel::ComputeWallShear(const unsigned short val_marker, CSolver * solver){}
 
-void CWallModel::ComputeWallHeatFlux(const unsigned short val_marker){}
+void CWallModel::ComputeWallHeatFlux(const unsigned short val_marker, CSolver * solver){}
 
 void CWallModel::Initialize(CBoundaryFEM * boundary, CConfig *config, CGeometry *geometry){}
 
@@ -56,9 +56,17 @@ CWallModel1DEQ::CWallModel1DEQ(void) : CWallModel(){
 
 CWallModel1DEQ::~CWallModel1DEQ(void){}
 
-void CWallModel1DEQ::ComputeWallShear(const unsigned short val_marker){}
+void CWallModel1DEQ::ComputeWallShear(const unsigned short val_marker, CSolver * solver){
 
-void CWallModel1DEQ::ComputeWallHeatFlux(const unsigned short val_marker){}
+  // In order to compute the wall shear, the wall model takes the values at the exchange point
+  // and then solves a set of ODEs
+  CBoundaryFEM * boundary =
+}
+
+
+
+
+void CWallModel1DEQ::ComputeWallHeatFlux(const unsigned short val_marker, CSolver * solver){}
 
 void CWallModel1DEQ::Initialize(CBoundaryFEM * boundary, CConfig *config, CGeometry *geometry){
 
