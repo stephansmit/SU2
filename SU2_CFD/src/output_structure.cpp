@@ -13071,8 +13071,7 @@ void COutput::LoadLocalData_IncFlow(CConfig *config, CGeometry *geometry, CSolve
         
         for (iDim = 0; iDim < nDim; iDim++) {
           for (jDim = 0; jDim < nDim; jDim++) {
-            su2double dvel = solver[FLOW_SOL]->node[iPoint]->GetGradient_Primitive()[iDim+1][jDim];
-            Local_Data[jPoint][iVar]= max(1e-10,dvel);
+          Local_Data[jPoint][iVar]= solver[FLOW_SOL]->node[iPoint]->GetGradient_Primitive()[iDim+1][jDim];
             iVar++;
         }
       }
