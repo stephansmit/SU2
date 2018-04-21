@@ -12897,7 +12897,7 @@ void COutput::LoadLocalData_Flow(CConfig *config, CGeometry *geometry, CSolver *
 
 void COutput::LoadLocalData_IncFlow(CConfig *config, CGeometry *geometry, CSolver **solver, unsigned short val_iZone) {
 
-  unsigned short iDim;
+  unsigned short iDim, jDim;
   unsigned short Kind_Solver = config->GetKind_Solver();
   unsigned short nDim = geometry->GetnDim();
 
@@ -13133,6 +13133,64 @@ void COutput::LoadLocalData_IncFlow(CConfig *config, CGeometry *geometry, CSolve
 
     nVar_Par += 1;
     Variable_Names.push_back("Density");
+    
+    /*--- Set of variables for SST calcs. ---*/
+    
+    nVar_Par += 1;
+    Variable_Names.push_back("WallDistance");
+    
+    nVar_Par += 1;
+    Variable_Names.push_back("StrainMag");
+    
+    nVar_Par += 1;
+    Variable_Names.push_back("RotationMag");
+    
+    nVar_Par += 1;
+    Variable_Names.push_back("Divergence");
+    
+    nVar_Par += 1;
+    Variable_Names.push_back("F1Blending");
+    nVar_Par += 1;
+    Variable_Names.push_back("F2Blending");
+    
+    nVar_Par += 1;
+    Variable_Names.push_back("Beta2");
+    
+    nVar_Par += 1;
+    Variable_Names.push_back("CrossDiffusion");
+    
+    nVar_Par += 1;
+    Variable_Names.push_back("dudx");
+    
+    nVar_Par += 1;
+    Variable_Names.push_back("dudy");
+    
+    if (nDim == 3) {
+      nVar_Par += 1;
+      Variable_Names.push_back("dudz");
+    }
+    
+    nVar_Par += 1;
+    Variable_Names.push_back("dvdx");
+    
+    nVar_Par += 1;
+    Variable_Names.push_back("dvdy");
+    
+    if (nDim == 3) {
+      nVar_Par += 1;
+      Variable_Names.push_back("dvdz");
+    }
+    
+    if (nDim == 3) {
+      nVar_Par += 1;
+      Variable_Names.push_back("dwdx");
+      
+      nVar_Par += 1;
+      Variable_Names.push_back("dwdy");
+      
+      nVar_Par += 1;
+      Variable_Names.push_back("dwdz");
+    }
 
   }
 
@@ -13367,6 +13425,35 @@ void COutput::LoadLocalData_IncFlow(CConfig *config, CGeometry *geometry, CSolve
          assuming they were registered above correctly. ---*/
 
         Local_Data[jPoint][iVar] = solver[FLOW_SOL]->node[iPoint]->GetDensity(); iVar++;
+        
+        Local_Data[jPoint][iVar] = geometry->node[iPoint]->GetWall_Distance(); iVar++;
+        
+        Local_Data[jPoint][iVar] = solver[FLOW_SOL]->node[iPoint]->GetStrainMag(); iVar++;
+        
+        su2double *Vorticity = solver[FLOW_SOL]->node[iPoint]->GetVorticity();
+        su2double Omega = sqrt(Vorticity[0]*Vorticity[0]+ Vorticity[1]*Vorticity[1]+ Vorticity[2]*Vorticity[2]);
+        
+        Local_Data[jPoint][iVar] = Omega; iVar++;
+        
+        su2double diverg = 0.0;
+        for (iDim = 0; iDim < nDim; iDim++)
+          diverg += solver[FLOW_SOL]->node[iPoint]->GetGradient_Primitive()[iDim+1][iDim];
+        
+        Local_Data[jPoint][iVar] = diverg; iVar++;
+        
+        Local_Data[jPoint][iVar] = solver[TURB_SOL]->node[iPoint]->GetF1blending(); iVar++;
+        Local_Data[jPoint][iVar] = solver[TURB_SOL]->node[iPoint]->GetF2blending(); iVar++;
+        
+        Local_Data[jPoint][iVar] = solver[FLOW_SOL]->node[iPoint]->GetBetaInc2(); iVar++;
+        
+        Local_Data[jPoint][iVar] = solver[TURB_SOL]->node[iPoint]->GetCrossDiff(); iVar++;
+        
+        for (iDim = 0; iDim < nDim; iDim++) {
+          for (jDim = 0; jDim < nDim; jDim++) {
+            Local_Data[jPoint][iVar]= solver[FLOW_SOL]->node[iPoint]->GetGradient_Primitive()[iDim+1][jDim];
+            iVar++;
+          }
+        }
 
       }
 
