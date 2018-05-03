@@ -37,6 +37,7 @@
 #include "../../Common/include/config_structure.hpp"
 #include "../../Common/include/fem_geometry_structure.hpp"
 
+
 #include <iostream>
 #include <cmath>
 
@@ -65,15 +66,21 @@ public:
    */
   virtual ~CWallModel(void);
 
-  virtual void ComputeWallShear(const unsigned short val_marker, CSolver * solver);
-
-  virtual void ComputeWallHeatFlux(const unsigned short val_marker, CSolver * solver);
-
   virtual void Initialize(CBoundaryFEM * boundary, CConfig *config, CGeometry *geometry);
 
   virtual void SetUpExchange(CBoundaryFEM * boundary, CConfig *config, CGeometry *geometry);
 
   virtual void SetPoints(CSurfaceElementFEM * thisElem, vector<su2double> exchangeCoords);
+
+  virtual void SolveCoupledSystem(std::vector<su2double> exVals, CSurfaceElementFEM * curFace, unsigned short nDim);
+
+  virtual void CalcShearStress(void);
+
+  virtual void CalcEnergyFlux(void);
+
+  virtual void UpdateSolution(void);
+
+  virtual void CalcViscosity(void);
 
 protected:
 
@@ -95,19 +102,21 @@ public:
    */
   ~CWallModel1DEQ(void);
 
-  void ComputeWallShear(const unsigned short val_marker, CSolver * solver);
-
-  void ComputeWallHeatFlux(const unsigned short val_marker, CSolver * solver);
-
   void Initialize(CBoundaryFEM * boundary, CConfig *config, CGeometry *geometry);
 
   void SetUpExchange(CBoundaryFEM * boundary, CConfig *config, CGeometry *geometry);
 
   void SetPoints(CSurfaceElementFEM * thisElem, su2double exchangeHeight);
 
-  void SolveCoupledSystem(CSurfaceElementFEM * thisElem, su2double u_bc, su2double T_bc, su2double P_bc, su2double * wallShear, su2double * heatFlux);
+  void SolveCoupledSystem(std::vector<su2double> exVals, CSurfaceElementFEM * curFace, unsigned short nDim);
 
-  void GetExchangeValues(unsigned short intPointID, su2double * u_exchange, su2double * T_exchange,  su2double * P_exchange);
+  void CalcShearStress(void);
+
+  void CalcEnergyFlux(void);
+
+  void UpdateSolution(void);
+
+  void CalcViscosity(void);
 
 protected:
 

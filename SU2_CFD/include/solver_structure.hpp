@@ -14843,7 +14843,55 @@ private:
                                         which is needed for other terms in the discretization.
    */
   void ViscousNormalFluxFace(CConfig                 *config,
-                             const short    val_marker,
+                             const CVolumeElementFEM *adjVolElem,
+                             const unsigned short    timeLevelFace,
+                             const unsigned short    nInt,
+                             const su2double         Wall_HeatFlux,
+                             const bool              HeatFlux_Prescribed,
+                             const su2double         *derBasisElem,
+                             const su2double         *solInt,
+                             const unsigned long     *DOFsElem,
+                             const su2double         *metricCoorDerivFace,
+                             const su2double         *metricNormalsFace,
+                             const su2double         *wallDistanceInt,
+                                   su2double         *gradSolInt,
+                                   su2double         *viscNormFluxes,
+                                   su2double         *viscosityInt,
+                                   su2double         *kOverCvInt);
+
+  /*!
+   * \brief Function to compute the viscous normal fluxes in the integration points of a face using a Wall Model.
+   * \param[in]   config              - Definition of the particular problem.
+   * \param[in]   val_marker          - The current marker index
+   * \param[in]   cur_face            - The current boundary face on this marker
+   * \param[in]   adjVolElem          - Pointer to the adjacent volume.
+   * \param[in]   timeLevelFace       - The time level of the face.
+   * \param[in]   nInt                - Number of integration points of the face.
+   * \param[in]   Wall_HeatFlux       - The value of the prescribed heat flux.
+   * \param[in]   HeatFlux_Prescribed - Whether or not the heat flux is prescribed by
+                                        e.g. the boundary conditions.
+   * \param[in]   derBasisElem        - Derivatives w.r.t. the parametric coordinates
+                                        of the basis functions of the adjacent face.
+   * \param[in]   solInt              - Solution in the integration points.
+   * \param[in]   DOFsElem            - The DOFs of the adjacent element in the sequence
+                                        needed by the face element.
+   * \param[in]   metricCoorDerivFace - Metric terms in the integration points, which
+                                        contain the derivatives of the parametric
+                                        coordinates w.r.t. the Cartesian coordinates.
+                                        Needed to compute the Cartesian gradients.
+   * \param[in]   metricNormalsFace   - Metric terms in the integration points, which
+                                        contain the normals.
+   * \param[in]   wallDistanceInt     - Wall distances in the integration points of the face.
+   * \param[out]  gradSolInt          - Gradient of the solution in the integration points.
+   * \param[out]  viscNormFluxes      - Viscous normal fluxes in the integration points.
+   * \param[out]  viscosityInt        - Viscosity in the integration points, which is
+                                        needed for other terms in the discretization.
+   * \param[out]  kOverCvInt          - Thermal conductivity over Cv in the integration points,
+                                        which is needed for other terms in the discretization.
+   */
+  void ViscousNormalFluxFace_WM(CConfig              *config,
+                             const short             val_marker,
+                             const unsigned long     cur_face,
                              const CVolumeElementFEM *adjVolElem,
                              const unsigned short    timeLevelFace,
                              const unsigned short    nInt,
@@ -14881,8 +14929,6 @@ private:
    * \param[out] normalFlux        - Viscous normal flux, to be computed.
    */
   void ViscousNormalFluxIntegrationPoint_2D(const su2double *sol,
-                                            CConfig * config,
-                                            const short val_marker,
                                             const su2double solGradCart[4][2],
                                             const su2double *normal,
                                             const su2double HeatFlux,
@@ -14915,8 +14961,6 @@ private:
    * \param[out] normalFlux        - Viscous normal flux, to be computed.
    */
   void ViscousNormalFluxIntegrationPoint_3D(const su2double *sol,
-                                            CConfig * config,
-                                            const short val_marker,
                                             const su2double solGradCart[5][3],
                                             const su2double *normal,
                                             const su2double HeatFlux,

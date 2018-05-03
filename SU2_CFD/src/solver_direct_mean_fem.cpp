@@ -8457,6 +8457,7 @@ CFEM_DG_NSSolver::CFEM_DG_NSSolver(CGeometry *geometry, CConfig *config, unsigne
     wallModel[iMarker] = NULL;
   }
 
+  std::cout << "------------------------------- Wall Model ------------------------------" << std::endl;
   /* Loop over all boundaries. */
   for (unsigned short iMarker = 0; iMarker < nMarker; iMarker++) {
     /*--- Get the boundary name ---*/
@@ -8474,8 +8475,18 @@ CFEM_DG_NSSolver::CFEM_DG_NSSolver(CGeometry *geometry, CConfig *config, unsigne
       wallModelUsed = true;
       /* Initialize wall model for this marker/boundary */
       wallModel[iMarker]->Initialize(thisBoundary, config, geometry);
-
     }
+    else{
+      wallModel[iMarker] = NULL;
+      CBoundaryFEM * thisBoundary = &(this->boundaries[iMarker]);
+      thisBoundary->wallModelBoundary = false;
+      thisBoundary->nWallModelPoints = 0;
+      thisBoundary->wallModelExpansionRatio = 0.0;
+      thisBoundary->wallModelThickness = 0.0;
+    }
+  }
+  if(wallModelUsed == false){
+    std::cout << "No Wall Model Detected." << std::endl;
   }
 }
 
@@ -11312,11 +11323,9 @@ void CFEM_DG_NSSolver::ResidualFaces(CConfig             *config,
     const unsigned short timeLevelFace = min(volElem[elemID0].timeLevel,
                                              volElem[elemID1].timeLevel);
 
-    const short dummyBoundary = -1;
-
     /* Call the general function to compute the viscous flux in normal
        direction for side 0. */
-    ViscousNormalFluxFace(config, dummyBoundary, &volElem[elemID0], timeLevelFace, nInt,
+    ViscousNormalFluxFace(config, &volElem[elemID0], timeLevelFace, nInt,
                           0.0, false, derBasisElem, solIntL,
                           matchingInternalFaces[l].DOFsSolElementSide0.data(),
                           matchingInternalFaces[l].metricCoorDerivFace0.data(),
@@ -11335,7 +11344,7 @@ void CFEM_DG_NSSolver::ResidualFaces(CConfig             *config,
 
     /* Call the general function to compute the viscous flux in normal
        direction for side 1. */
-    ViscousNormalFluxFace(config, dummyBoundary, &volElem[elemID1], timeLevelFace, nInt,
+    ViscousNormalFluxFace(config, &volElem[elemID1], timeLevelFace, nInt,
                           0.0, false, derBasisElem, solIntR,
                           matchingInternalFaces[l].DOFsSolElementSide1.data(),
                           matchingInternalFaces[l].metricCoorDerivFace1.data(),
@@ -11502,7 +11511,6 @@ void CFEM_DG_NSSolver::ResidualFaces(CConfig             *config,
 }
 
 void CFEM_DG_NSSolver::ViscousNormalFluxFace(CConfig                 *config,
-                                             const short             val_marker,
                                              const CVolumeElementFEM *adjVolElem,
                                              const unsigned short    timeLevelFace,
                                              const unsigned short    nInt,
@@ -11621,7 +11629,7 @@ void CFEM_DG_NSSolver::ViscousNormalFluxFace(CConfig                 *config,
 
         su2double Viscosity, kOverCv;
 
-        ViscousNormalFluxIntegrationPoint_2D(sol, config, val_marker, solGradCart, normal, HeatFlux,
+        ViscousNormalFluxIntegrationPoint_2D(sol, solGradCart, normal, HeatFlux,
                                              factHeatFlux_Lam, factHeatFlux_Turb,
                                              wallDist, lenScale_LES,
                                              Viscosity, kOverCv, normalFlux);
@@ -11693,7 +11701,7 @@ void CFEM_DG_NSSolver::ViscousNormalFluxFace(CConfig                 *config,
 
         su2double Viscosity, kOverCv;
 
-        ViscousNormalFluxIntegrationPoint_3D(sol, config, val_marker, solGradCart, normal, HeatFlux,
+        ViscousNormalFluxIntegrationPoint_3D(sol, solGradCart, normal, HeatFlux,
                                              factHeatFlux_Lam, factHeatFlux_Turb,
                                              wallDist, lenScale_LES,
                                              Viscosity, kOverCv, normalFlux);
@@ -11706,9 +11714,125 @@ void CFEM_DG_NSSolver::ViscousNormalFluxFace(CConfig                 *config,
   }
 }
 
+void CFEM_DG_NSSolver::ViscousNormalFluxFace_WM(CConfig              *config,
+                                             const short             val_marker,
+                                             const unsigned long     cur_face,
+                                             const CVolumeElementFEM *adjVolElem,
+                                             const unsigned short    timeLevelFace,
+                                             const unsigned short    nInt,
+                                             const su2double         Wall_HeatFlux,
+                                             const bool              HeatFlux_Prescribed,
+                                             const su2double         *derBasisElem,
+                                             const su2double         *solInt,
+                                             const unsigned long     *DOFsElem,
+                                             const su2double         *metricCoorDerivFace,
+                                             const su2double         *metricNormalsFace,
+                                             const su2double         *wallDistanceInt,
+                                                   su2double         *gradSolInt,
+                                                   su2double         *viscNormFluxes,
+                                                   su2double         *viscosityInt,
+                                                   su2double         *kOverCvInt){
+
+  double tick = 0.0;
+
+  /* Constant factor present in the heat flux vector. Set it to zero if the heat
+     flux is prescribed, such that no if statements are needed in the loop. */
+  const su2double factHeatFlux_Lam  = HeatFlux_Prescribed ? su2double(0.0): Gamma/Prandtl_Lam;
+  const su2double factHeatFlux_Turb = HeatFlux_Prescribed ? su2double(0.0): Gamma/Prandtl_Turb;
+
+  /* Set the value of the prescribed heat flux for the same reason. */
+  const su2double HeatFlux = HeatFlux_Prescribed ? Wall_HeatFlux : su2double(0.0);
+
+  /* Get the current boundary, and face information, using the val_marker. */
+  CBoundaryFEM * boundary = &(this->boundaries[val_marker]);
+  CSurfaceElementFEM * face = &(boundary->surfElem[cur_face]);
+  const unsigned short nDOFsFace = face->DOFsSolFace.size();
+
+  /* Double check that this is a wall-modeled boundary */
+  if(boundary->wallModelBoundary == false){
+    std::cout << "Boundary " << boundary->markerTag << " is not a wall-modeled boundary. Exiting." << std::endl;
+    exit(EXIT_FAILURE);
+  }
+
+  /* Determine the number of DOFs of the adjacent element and the offset that
+     must be applied to access the correct data for this element in the working
+     vector of the solution. If the element has the same time level as the face
+     offsetDOFsSolThisTimeLevel is used, otherwise offsetDOFsSolPrevTimeLevel
+     is the correct value. */
+  const unsigned short nDOFsElem = adjVolElem->nDOFsSol;
+  unsigned long offset;
+  if(adjVolElem->timeLevel == timeLevelFace)
+    offset = adjVolElem->offsetDOFsSolLocal - adjVolElem->offsetDOFsSolThisTimeLevel;
+  else
+    offset = adjVolElem->offsetDOFsSolLocal - adjVolElem->offsetDOFsSolPrevTimeLevel;
+
+  /* Compute the length scale for the LES of the adjacent element. */
+  const unsigned short iind  = adjVolElem->indStandardElement;
+  unsigned short       nPoly = standardElementsSol[iind].GetNPoly();
+  if(nPoly == 0) nPoly = 1;
+
+  const su2double lenScale_LES = adjVolElem->lenScale/nPoly;
+
+  /* Set the pointer solElem to viscNormFluxes. This is just for readability, as the
+     same memory can be used for the storage of the solution of the DOFs of
+     the element and the fluxes to be computed. */
+  su2double *solElem = viscNormFluxes;
+
+//  /*--- Store the solution of the DOFs of the adjacent element in contiguous
+//        memory such that the function DenseMatrixProduct can be used to compute
+//        the gradients solution variables in the integration points of the face. ---*/
+//  const unsigned long nBytes = nVar*sizeof(su2double);
+//  for(unsigned short i=0; i<nDOFsElem; ++i) {
+//    const su2double *solDOF = VecWorkSolDOFs[timeLevelFace].data() + nVar*(DOFsElem[i] - offset);
+//    su2double       *sol    = solElem + nVar*i;
+//    memcpy(sol, solDOF, nBytes);
+//  }
+
+//  // Debugging output
+//  if(cur_face == 0){
+//    std::cout << "Current boundary = " << boundary->markerTag << std::endl;
+//    std::cout << "Current face = " << cur_face << std::endl;
+//    std::cout << "Number of DOFs of face = " << nDOFsFace << std::endl;
+//    std::cout << "Corresponding volume element ID = " << face->volElemID << std::endl;
+//    std::cout << "Corresponding element at index equal to ID = " << volElem[face->volElemID].elemIDGlobal << std::endl;
+//    std::cout << "adjVolElem elemIDGlobal = " << adjVolElem->elemIDGlobal << std::endl;
+//    std::cout << "adjVolElem offsetDOFsSolGlobal = " << adjVolElem->offsetDOFsSolGlobal << std::endl;
+//    std::cout << "adjVolElem offsetDOFsSolLocal = " << adjVolElem->offsetDOFsSolLocal << std::endl;
+//    std::cout << "adjVolElem offsetDOFsSolThisTimeLevel = " << adjVolElem->offsetDOFsSolThisTimeLevel << std::endl;
+//  }
+
+  const unsigned long nBytes = nVar*sizeof(su2double);
+  // Loop over the DOFs of the boundary face
+  for(unsigned short i=0; i<nDOFsFace; i++){
+
+    // For this boundary face DOF, get the exchange DOF (located at the exchange distance "above" this point)
+    unsigned short exchangeID = face->exchangePointIDs[i];
+
+    su2double * exSolPtr = VecWorkSolDOFs[timeLevelFace].data() + nVar*(DOFsElem[exchangeID]-offset);
+
+    std::vector<su2double> exchangeVals(5,0.0);
+
+    // Get the solution values at the exchange location
+    if(nDim == 2){
+      exchangeVals[0] = *(exSolPtr);
+      exchangeVals[1] = *(exSolPtr + 1)/ exchangeVals[0];
+      exchangeVals[2] = *(exSolPtr + 2)/ exchangeVals[0];
+      exchangeVals[3] = *(exSolPtr + 3)/ exchangeVals[0];
+    }
+    else if(nDim == 3){
+      exchangeVals[0] = *(exSolPtr);
+      exchangeVals[1] = *(exSolPtr + 1)/ exchangeVals[0];
+      exchangeVals[2] = *(exSolPtr + 2)/ exchangeVals[0];
+      exchangeVals[3] = *(exSolPtr + 3)/ exchangeVals[0];
+      exchangeVals[4] = *(exSolPtr + 4)/ exchangeVals[0];
+    }
+
+    this->wallModel[val_marker]->SolveCoupledSystem(exchangeVals, face, nDim);
+
+  }
+}
+
 void CFEM_DG_NSSolver::ViscousNormalFluxIntegrationPoint_2D(const su2double *sol,
-                                                            CConfig * config,
-                                                            const short     val_marker,
                                                             const su2double solGradCart[4][2],
                                                             const su2double *normal,
                                                             const su2double HeatFlux,
@@ -11766,51 +11890,29 @@ void CFEM_DG_NSSolver::ViscousNormalFluxIntegrationPoint_2D(const su2double *sol
   const su2double lambda     = -TWO3*Viscosity;
   const su2double lamDivTerm =  lambda*divVel;
 
-  /*--- Setup a boundary pointer and determine if a wall model is used---*/
-  CBoundaryFEM * boundary = NULL;
-  bool isWallModelUsed = false;
+  /*--- Compute the viscous stress tensor and minus the heatflux vector. ---*/
+  const su2double tauxx = 2.0*Viscosity*dudx + lamDivTerm;
+  const su2double tauyy = 2.0*Viscosity*dvdy + lamDivTerm;
+  const su2double tauxy = Viscosity*(dudy + dvdx);
 
-  /*--- Determine if we are operating on a valid boundary (val_marker != -1) ---*/
-  if(val_marker >= 0){
-    boundary = &(this->boundaries[val_marker]);
-    std::cout << "val_marker " << val_marker << "is boundary: " << boundary->markerTag << std::endl;
-    isWallModelUsed = boundary->wallModelBoundary;
-  }
+  const su2double qx = kOverCv*dStaticEnergyDx;
+  const su2double qy = kOverCv*dStaticEnergyDy;
 
-  /*--- If no wall model, then calculate the wall shear stress values as normal ---*/
-  if(isWallModelUsed == false){
+  /* Compute the unscaled normal vector. */
+  const su2double nx = normal[0]*normal[2];
+  const su2double ny = normal[1]*normal[2];
 
-    /*--- Compute the viscous stress tensor and minus the heatflux vector. ---*/
-    const su2double tauxx = 2.0*Viscosity*dudx + lamDivTerm;
-    const su2double tauyy = 2.0*Viscosity*dvdy + lamDivTerm;
-    const su2double tauxy = Viscosity*(dudy + dvdx);
-
-    const su2double qx = kOverCv*dStaticEnergyDx;
-    const su2double qy = kOverCv*dStaticEnergyDy;
-
-    /* Compute the unscaled normal vector. */
-    const su2double nx = normal[0]*normal[2];
-    const su2double ny = normal[1]*normal[2];
-
-    /*--- Compute the viscous normal flux. Note that the energy flux get a
-          contribution from both the prescribed and the computed heat flux.
-          At least one of these terms is zero. ---*/
-    normalFlux[0] = 0.0;
-    normalFlux[1] = tauxx*nx + tauxy*ny;
-    normalFlux[2] = tauxy*nx + tauyy*ny;
-    normalFlux[3] = normal[2]*HeatFlux
-                  + (u*tauxx + v*tauxy + qx)*nx + (u*tauxy + v*tauyy + qy)*ny;
-  }
-  /* If a wall model is used, then call the wall model routines to calculate wall shear stress and
-     flux values.*/
-  else if(isWallModelUsed == true){
-    this->wallModel[val_marker]->ComputeWallShear(val_marker);
-  }
+  /*--- Compute the viscous normal flux. Note that the energy flux get a
+        contribution from both the prescribed and the computed heat flux.
+        At least one of these terms is zero. ---*/
+  normalFlux[0] = 0.0;
+  normalFlux[1] = tauxx*nx + tauxy*ny;
+  normalFlux[2] = tauxy*nx + tauyy*ny;
+  normalFlux[3] = normal[2]*HeatFlux
+                + (u*tauxx + v*tauxy + qx)*nx + (u*tauxy + v*tauyy + qy)*ny;
 }
 
 void CFEM_DG_NSSolver::ViscousNormalFluxIntegrationPoint_3D(const su2double *sol,
-                                                            CConfig * config,
-                                                            const short     val_marker,
                                                             const su2double solGradCart[5][3],
                                                             const su2double *normal,
                                                             const su2double HeatFlux,
@@ -11880,52 +11982,35 @@ void CFEM_DG_NSSolver::ViscousNormalFluxIntegrationPoint_3D(const su2double *sol
   const su2double lambda     = -TWO3*Viscosity;
   const su2double lamDivTerm =  lambda*divVel;
 
-  /*--- Setup a boundary pointer and determine if a wall model is used---*/
-  CBoundaryFEM * boundary = NULL;
-  bool isWallModelUsed = false;
+  /*--- Compute the viscous stress tensor and minus the heatflux vector. ---*/
+  const su2double tauxx = 2.0*Viscosity*dudx + lamDivTerm;
+  const su2double tauyy = 2.0*Viscosity*dvdy + lamDivTerm;
+  const su2double tauzz = 2.0*Viscosity*dwdz + lamDivTerm;
 
-  /*--- Determine if we are operating on a valid boundary (val_marker != -1) ---*/
-  if(val_marker >= 0){
-    boundary = &(this->boundaries[val_marker]);
-    isWallModelUsed = boundary->wallModelBoundary;
-  }
+  const su2double tauxy = Viscosity*(dudy + dvdx);
+  const su2double tauxz = Viscosity*(dudz + dwdx);
+  const su2double tauyz = Viscosity*(dvdz + dwdy);
 
-  if( isWallModelUsed == false){
-    /*--- Compute the viscous stress tensor and minus the heatflux vector. ---*/
-    const su2double tauxx = 2.0*Viscosity*dudx + lamDivTerm;
-    const su2double tauyy = 2.0*Viscosity*dvdy + lamDivTerm;
-    const su2double tauzz = 2.0*Viscosity*dwdz + lamDivTerm;
+  const su2double qx = kOverCv*dStaticEnergyDx;
+  const su2double qy = kOverCv*dStaticEnergyDy;
+  const su2double qz = kOverCv*dStaticEnergyDz;
 
-    const su2double tauxy = Viscosity*(dudy + dvdx);
-    const su2double tauxz = Viscosity*(dudz + dwdx);
-    const su2double tauyz = Viscosity*(dvdz + dwdy);
+  /* Compute the unscaled normal vector. */
+  const su2double nx = normal[0]*normal[3];
+  const su2double ny = normal[1]*normal[3];
+  const su2double nz = normal[2]*normal[3];
 
-    const su2double qx = kOverCv*dStaticEnergyDx;
-    const su2double qy = kOverCv*dStaticEnergyDy;
-    const su2double qz = kOverCv*dStaticEnergyDz;
-
-    /* Compute the unscaled normal vector. */
-    const su2double nx = normal[0]*normal[3];
-    const su2double ny = normal[1]*normal[3];
-    const su2double nz = normal[2]*normal[3];
-
-    /*--- Compute the viscous normal flux. Note that the energy flux get a
-          contribution from both the prescribed and the computed heat flux.
-          At least one of these terms is zero. ---*/
-    normalFlux[0] = 0.0;
-    normalFlux[1] = tauxx*nx + tauxy*ny + tauxz*nz;
-    normalFlux[2] = tauxy*nx + tauyy*ny + tauyz*nz;
-    normalFlux[3] = tauxz*nx + tauyz*ny + tauzz*nz;
-    normalFlux[4] = normal[3]*HeatFlux
-                  + (u*tauxx + v*tauxy + w*tauxz + qx)*nx
-                  + (u*tauxy + v*tauyy + w*tauyz + qy)*ny
-                  + (u*tauxz + v*tauyz + w*tauzz + qz)*nz;
-  }
-  /* If a wall model is used, then call the wall model routines to calculate wall shear stress and
-     flux values.*/
-  else if(isWallModelUsed == true){
-    this->wallModel[val_marker]->ComputeWallShear(val_marker);
-  }
+  /*--- Compute the viscous normal flux. Note that the energy flux get a
+        contribution from both the prescribed and the computed heat flux.
+        At least one of these terms is zero. ---*/
+  normalFlux[0] = 0.0;
+  normalFlux[1] = tauxx*nx + tauxy*ny + tauxz*nz;
+  normalFlux[2] = tauxy*nx + tauyy*ny + tauyz*nz;
+  normalFlux[3] = tauxz*nx + tauyz*ny + tauzz*nz;
+  normalFlux[4] = normal[3]*HeatFlux
+                + (u*tauxx + v*tauxy + w*tauxz + qx)*nx
+                + (u*tauxy + v*tauyy + w*tauyz + qy)*ny
+                + (u*tauxz + v*tauyz + w*tauzz + qz)*nz;
 }
 
 void CFEM_DG_NSSolver::PenaltyTermsFluxFace(const unsigned short nInt,
@@ -12423,9 +12508,7 @@ void CFEM_DG_NSSolver::BC_Euler_Wall(CConfig                  *config,
     const unsigned short nInt     = standardBoundaryFacesSol[ind].GetNIntegration();
     const su2double *derBasisElem = standardBoundaryFacesSol[ind].GetMatDerBasisElemIntegration();
 
-    const short dummyBoundary = -1;
-
-    ViscousNormalFluxFace(config, dummyBoundary, &volElem[elemID], timeLevel, nInt,
+    ViscousNormalFluxFace(config, &volElem[elemID], timeLevel, nInt,
                           0.0, false, derBasisElem, solIntL,
                           surfElem[l].DOFsSolElement.data(),
                           surfElem[l].metricCoorDerivFace.data(),
@@ -12492,8 +12575,7 @@ void CFEM_DG_NSSolver::BC_Far_Field(CConfig                  *config,
        direction for the face. */
     const su2double *derBasisElem = standardBoundaryFacesSol[ind].GetMatDerBasisElemIntegration();
 
-    const short dummyBoundary = -1;
-    ViscousNormalFluxFace(config, dummyBoundary, &volElem[elemID], timeLevel, nInt,
+    ViscousNormalFluxFace(config, &volElem[elemID], timeLevel, nInt,
                           0.0, false, derBasisElem, solIntL,
                           surfElem[l].DOFsSolElement.data(),
                           surfElem[l].metricCoorDerivFace.data(),
@@ -12698,13 +12780,11 @@ void CFEM_DG_NSSolver::BC_Sym_Plane(CConfig                  *config,
           su2double viscFluxL[4], viscFluxR[4];
           su2double Viscosity, kOverCv;
 
-          const short dummyBoundary = -1;
-
-          ViscousNormalFluxIntegrationPoint_2D(UR, dummyBoundary, URGradCart, normals, 0.0,
+          ViscousNormalFluxIntegrationPoint_2D(UR, URGradCart, normals, 0.0,
                                                factHeatFlux_Lam, factHeatFlux_Turb,
                                                wallDist, lenScale_LES, Viscosity,
                                                kOverCv, viscFluxR);
-          ViscousNormalFluxIntegrationPoint_2D(UL, dummyBoundary, ULGradCart, normals, 0.0,
+          ViscousNormalFluxIntegrationPoint_2D(UL, ULGradCart, normals, 0.0,
                                                factHeatFlux_Lam, factHeatFlux_Turb,
                                                wallDist, lenScale_LES, Viscosity,
                                                kOverCv, viscFluxL);
@@ -12847,13 +12927,11 @@ void CFEM_DG_NSSolver::BC_Sym_Plane(CConfig                  *config,
           su2double viscFluxL[5], viscFluxR[5];
           su2double Viscosity, kOverCv;
 
-          const short dummyBoundary = -1;
-
-          ViscousNormalFluxIntegrationPoint_3D(UR, dummyBoundary, URGradCart, normals, 0.0,
+          ViscousNormalFluxIntegrationPoint_3D(UR, URGradCart, normals, 0.0,
                                                factHeatFlux_Lam, factHeatFlux_Turb,
                                                wallDist, lenScale_LES, Viscosity,
                                                kOverCv, viscFluxR);
-          ViscousNormalFluxIntegrationPoint_3D(UL, dummyBoundary, ULGradCart, normals, 0.0,
+          ViscousNormalFluxIntegrationPoint_3D(UL, ULGradCart, normals, 0.0,
                                                factHeatFlux_Lam, factHeatFlux_Turb,
                                                wallDist, lenScale_LES, Viscosity,
                                                kOverCv, viscFluxL);
@@ -12925,9 +13003,7 @@ void CFEM_DG_NSSolver::BC_Inlet(CConfig                  *config,
     const unsigned short nInt     = standardBoundaryFacesSol[ind].GetNIntegration();
     const su2double *derBasisElem = standardBoundaryFacesSol[ind].GetMatDerBasisElemIntegration();
 
-    const short dummyBoundary = -1;
-
-    ViscousNormalFluxFace(config, dummyBoundary, &volElem[elemID], timeLevel, nInt,
+    ViscousNormalFluxFace(config, &volElem[elemID], timeLevel, nInt,
                           0.0, false, derBasisElem, solIntL,
                           surfElem[l].DOFsSolElement.data(),
                           surfElem[l].metricCoorDerivFace.data(),
@@ -12988,9 +13064,7 @@ void CFEM_DG_NSSolver::BC_Outlet(CConfig                  *config,
     const unsigned short nInt     = standardBoundaryFacesSol[ind].GetNIntegration();
     const su2double *derBasisElem = standardBoundaryFacesSol[ind].GetMatDerBasisElemIntegration();
 
-    const short dummyBoundary = -1;
-
-    ViscousNormalFluxFace(config, dummyBoundary, &volElem[elemID], timeLevel, nInt,
+    ViscousNormalFluxFace(config, &volElem[elemID], timeLevel, nInt,
                           0.0, false, derBasisElem, solIntL,
                           surfElem[l].DOFsSolElement.data(),
                           surfElem[l].metricCoorDerivFace.data(),
@@ -13039,6 +13113,13 @@ void CFEM_DG_NSSolver::BC_HeatFlux_Wall(CConfig                  *config,
   su2double *gradSolInt   = kOverCvInt   + nIntegrationMax;
   su2double *fluxes       = gradSolInt   + sizeGradSolInt;
   su2double *viscFluxes   = fluxes       + sizeFluxes;
+
+  /*--- WALL MODEL ---*/
+  /* If using a wall model, the solution of the viscous normal fluxes at the integration points is
+   * done differently than if not using a wall model. First, must determine if we are on a wall-modeled
+   * boundary */
+  CBoundaryFEM * this_boundary = &(this->boundaries[val_marker]);
+  bool isWallModeled = this_boundary->wallModelBoundary;
 
   /*--- Loop over the given range of boundary faces. ---*/
   unsigned long indResFaces = 0;
@@ -13096,13 +13177,25 @@ void CFEM_DG_NSSolver::BC_HeatFlux_Wall(CConfig                  *config,
        direction for the face. */
     const su2double *derBasisElem = standardBoundaryFacesSol[ind].GetMatDerBasisElemIntegration();
 
-    ViscousNormalFluxFace(config, val_marker, &volElem[elemID], timeLevel, nInt,
-                          Wall_HeatFlux, true, derBasisElem, solIntL,
-                          surfElem[l].DOFsSolElement.data(),
-                          surfElem[l].metricCoorDerivFace.data(),
-                          surfElem[l].metricNormalsFace.data(),
-                          surfElem[l].wallDistance.data(),
-                          gradSolInt, viscFluxes, viscosityInt, kOverCvInt);
+    /*--- If we ARE on a wall-modeled boundary, then we must proceed to find the viscous fluxes differently. ---*/
+    if(isWallModeled == true){
+      ViscousNormalFluxFace_WM(config, val_marker, l, &volElem[elemID], timeLevel, nInt,
+                               Wall_HeatFlux, true, derBasisElem, solIntL,
+                               surfElem[l].DOFsSolElement.data(),
+                               surfElem[l].metricCoorDerivFace.data(),
+                               surfElem[l].metricNormalsFace.data(),
+                               surfElem[l].wallDistance.data(),
+                               gradSolInt, viscFluxes, viscosityInt, kOverCvInt);
+    }
+    else if(isWallModeled == false){
+      ViscousNormalFluxFace(config, &volElem[elemID], timeLevel, nInt,
+                            Wall_HeatFlux, true, derBasisElem, solIntL,
+                            surfElem[l].DOFsSolElement.data(),
+                            surfElem[l].metricCoorDerivFace.data(),
+                            surfElem[l].metricNormalsFace.data(),
+                            surfElem[l].wallDistance.data(),
+                            gradSolInt, viscFluxes, viscosityInt, kOverCvInt);
+    }
 
     /* The remainder of the contribution of this boundary face to the residual
        is the same for all boundary conditions. Hence a generic function can
@@ -13150,6 +13243,14 @@ void CFEM_DG_NSSolver::BC_Isothermal_Wall(CConfig                  *config,
   su2double *gradSolInt   = kOverCvInt   + nIntegrationMax;
   su2double *fluxes       = gradSolInt   + sizeGradSolInt;
   su2double *viscFluxes   = fluxes       + sizeFluxes;
+
+  /*--- WALL MODEL ---*/
+  /* If using a wall model, the solution of the viscous normal fluxes at the integration points is
+   * done differently than if not using a wall model. First, must determine if we are on a wall-modeled
+   * boundary
+   */
+  CBoundaryFEM * this_boundary = &(this->boundaries[val_marker]);
+  bool isWallModeled = this_boundary->wallModelBoundary;
 
   /*--- Loop over the given range of boundary faces. ---*/
   unsigned long indResFaces = 0;
@@ -13203,13 +13304,24 @@ void CFEM_DG_NSSolver::BC_Isothermal_Wall(CConfig                  *config,
        direction for the face. */
     const su2double *derBasisElem = standardBoundaryFacesSol[ind].GetMatDerBasisElemIntegration();
 
-    ViscousNormalFluxFace(config, val_marker, &volElem[elemID], timeLevel, nInt,
-                          0.0, false, derBasisElem, solIntL,
-                          surfElem[l].DOFsSolElement.data(),
-                          surfElem[l].metricCoorDerivFace.data(),
-                          surfElem[l].metricNormalsFace.data(),
-                          surfElem[l].wallDistance.data(),
-                          gradSolInt, viscFluxes, viscosityInt, kOverCvInt);
+    if(isWallModeled == true){
+      ViscousNormalFluxFace_WM(config, val_marker, l, &volElem[elemID], timeLevel, nInt,
+                               0.0, false, derBasisElem, solIntL,
+                               surfElem[l].DOFsSolElement.data(),
+                               surfElem[l].metricCoorDerivFace.data(),
+                               surfElem[l].metricNormalsFace.data(),
+                               surfElem[l].wallDistance.data(),
+                               gradSolInt, viscFluxes, viscosityInt, kOverCvInt);
+    }
+    else if(isWallModeled == false){
+      ViscousNormalFluxFace(config, &volElem[elemID], timeLevel, nInt,
+                            0.0, false, derBasisElem, solIntL,
+                            surfElem[l].DOFsSolElement.data(),
+                            surfElem[l].metricCoorDerivFace.data(),
+                            surfElem[l].metricNormalsFace.data(),
+                            surfElem[l].wallDistance.data(),
+                            gradSolInt, viscFluxes, viscosityInt, kOverCvInt);
+    }
 
     /* The remainder of the contribution of this boundary face to the residual
        is the same for all boundary conditions. Hence a generic function can
@@ -13264,9 +13376,7 @@ void CFEM_DG_NSSolver::BC_Riemann(CConfig                  *config,
     const unsigned short nInt     = standardBoundaryFacesSol[ind].GetNIntegration();
     const su2double *derBasisElem = standardBoundaryFacesSol[ind].GetMatDerBasisElemIntegration();
 
-    const short dummyBoundary = -1;
-
-    ViscousNormalFluxFace(config, dummyBoundary, &volElem[elemID], timeLevel, nInt,
+    ViscousNormalFluxFace(config, &volElem[elemID], timeLevel, nInt,
                           0.0, false, derBasisElem, solIntL,
                           surfElem[l].DOFsSolElement.data(),
                           surfElem[l].metricCoorDerivFace.data(),
@@ -13381,9 +13491,7 @@ void CFEM_DG_NSSolver::BC_Custom(CConfig                  *config,
        direction for the face. */
     const su2double *derBasisElem = standardBoundaryFacesSol[ind].GetMatDerBasisElemIntegration();
 
-    const short dummyBoundary = -1;
-
-    ViscousNormalFluxFace(config, dummyBoundary, &volElem[elemID], timeLevel, nInt,
+    ViscousNormalFluxFace(config, &volElem[elemID], timeLevel, nInt,
                           0.0, false, derBasisElem, solIntL,
                           surfElem[l].DOFsSolElement.data(),
                           surfElem[l].metricCoorDerivFace.data(),
