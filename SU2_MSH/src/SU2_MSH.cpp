@@ -2,7 +2,7 @@
  * \file SU2_MSH.cpp
  * \brief Main file of Mesh Adaptation Code (SU2_MSH).
  * \author F. Palacios, T. Economon
- * \version 6.0.0 "Falcon"
+ * \version 6.0.1 "Falcon"
  *
  * The current SU2 release has been coordinated by the
  * SU2 International Developers Society <www.su2devsociety.org>
@@ -301,11 +301,10 @@ int main(int argc, char *argv[]) {
       geometry_container[ZONE_0]->SetPeriodicBoundary(config_container[ZONE_0]);
       
       /*--- Original grid for debugging purposes ---*/
-
+      
       if (config->GetOutput_FileFormat() == TECPLOT) {
         strcpy (file_name, "periodic_original.dat"); geometry_container[ZONE_0]->SetTecPlot(file_name, true);
       } else if (config->GetOutput_FileFormat() == PARAVIEW) {
-        cout << "first" << endl;
         strcpy (file_name, "periodic_original.vtk"); geometry_container[ZONE_0]->SetParaView(file_name, true);
       }
       
@@ -316,16 +315,14 @@ int main(int argc, char *argv[]) {
       periodic->SetMeshFile(geometry_container[ZONE_0], config_container[ZONE_0], config_container[ZONE_0]->GetMesh_Out_FileName());
       
       /*--- Output of the grid for debuging purposes ---*/
-
+      
       if (config->GetOutput_FileFormat() == TECPLOT) {
         strcpy (file_name, "periodic_halo.dat"); periodic->SetTecPlot(file_name, true);
       } else if (config->GetOutput_FileFormat() == PARAVIEW) {
-        cout << "2" << endl;
-
         strcpy (file_name, "periodic_halo.vtk"); periodic->SetParaView(file_name, true);
       }
     }
-
+    
     if (config_container[ZONE_0]->GetKind_Adaptation() == NONE) {
       strcpy (file_name, "original_grid.dat");
       geometry_container[ZONE_0]->SetTecPlot(file_name, true);
@@ -333,6 +330,30 @@ int main(int argc, char *argv[]) {
     }
     
 	}
+  
+  if (rank == MASTER_NODE)
+    cout << endl <<"------------------------- Solver Postprocessing -------------------------" << endl;
+  
+  if (geometry_container != NULL) {
+    for (iZone = 0; iZone < nZone; iZone++) {
+      if (geometry_container[iZone] != NULL) {
+        delete geometry_container[iZone];
+      }
+    }
+    delete [] geometry_container;
+  }
+  if (rank == MASTER_NODE) cout << "Deleted CGeometry container." << endl;
+  
+  
+  if (config_container != NULL) {
+    for (iZone = 0; iZone < nZone; iZone++) {
+      if (config_container[iZone] != NULL) {
+        delete config_container[iZone];
+      }
+    }
+    delete [] config_container;
+  }
+  if (rank == MASTER_NODE) cout << "Deleted CConfig container." << endl;
   
   delete config;
   config = NULL;
@@ -367,4 +388,3 @@ int main(int argc, char *argv[]) {
   return EXIT_SUCCESS;
   
 }
-
