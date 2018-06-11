@@ -125,6 +125,7 @@ libSU2Core_sources = \
   ../src/transfer_physics.cpp \
   ../src/transfer_structure.cpp \
   ../src/transport_model.cpp \
+  ../src/transport_model_toluene.cpp \
   ../src/variable_adjoint_mean.cpp \
   ../src/variable_adjoint_mean_inc.cpp \
   ../src/variable_adjoint_turbulent.cpp \

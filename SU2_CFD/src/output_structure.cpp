@@ -6571,7 +6571,9 @@ void COutput::SpecialOutput_ForcesBreakdown(CSolver ****solver, CGeometry ***geo
             Breakdown_file << "Ref. Temperature (non-dim): " << config[val_iZone]->GetMu_Temperature_RefND()<< "\n";
             Breakdown_file << "Sutherland constant (non-dim): "<< config[val_iZone]->GetMu_SND()<< "\n";
             break;
-            
+          case TOLUENE_VISCOSITY:
+            Breakdown_file << "Viscosity Model: TOLUENE_VISCOSITY "<< "\n";
+            break;
         }
         switch (config[val_iZone]->GetKind_ConductivityModel()) {
             
@@ -6585,7 +6587,9 @@ void COutput::SpecialOutput_ForcesBreakdown(CSolver ****solver, CGeometry ***geo
             Breakdown_file << "Molecular Conductivity: " << config[val_iZone]->GetKt_Constant()<< " W/m^2.K." << "\n";
             Breakdown_file << "Molecular Conductivity (non-dim): " << config[val_iZone]->GetKt_ConstantND()<< "\n";
             break;
-            
+          case TOLUENE_CONDUCTIVITY:
+            Breakdown_file << "Conductivity Model: TOLUENE_CONDUCTIVITY  "<< "\n";
+            break;
         }
       }
     }

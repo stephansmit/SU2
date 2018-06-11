@@ -68,6 +68,9 @@ void CFluidModel::SetLaminarViscosityModel (CConfig *config) {
   case SUTHERLAND:
     LaminarViscosity = new CSutherland(config->GetMu_RefND(), config->GetMu_Temperature_RefND(), config->GetMu_SND());
     break;
+  case TOLUENE_VISCOSITY:
+    LaminarViscosity = new CViscosityToluene();
+    break;
   }
   
 }
@@ -80,6 +83,9 @@ void CFluidModel::SetThermalConductivityModel (CConfig *config) {
     break;
   case CONSTANT_PRANDTL:
     ThermalConductivity = new CConstantPrandtl(config->GetPrandtl_Lam());
+    break;
+  case TOLUENE_CONDUCTIVITY:
+      ThermalConductivity = new CConductivityToluene();
     break;
   }
   

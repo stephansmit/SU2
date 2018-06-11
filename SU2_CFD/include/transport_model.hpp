@@ -177,6 +177,63 @@ public:
 };
 
 
+class CViscosityToluene : public CViscosityModel {
+protected:
+  su2double      Mu_ref,    /*!< \brief Internal Energy. */
+  T_ref,     /*!< \brief DpDd_e. */
+  S;         /*!< \brief DpDe_d. */
+  su2double alpha_0, alpha_1,alpha_2,alpha_3;
+  su2double b_0, b_1,b_2,b_3,b_4,b_5,b_6,b_7,b_8;
+  su2double c_0, c_1,c_2,c_3,c_4,c_5;
+  su2double T_c, rho_c;
+  su2double sigma;
+  su2double M;
+  su2double EnergyScale;
+  su2double N_A;
+  su2double Mu_0(su2double T);
+  su2double Mu_1(su2double T);
+  su2double DeltaMu(su2double T, su2double rho);
+  su2double Sstar_mu(su2double T);
+  su2double B_mu(su2double T);
+  su2double dB_mudT_rho(su2double T);
+  su2double Bstar_mu(su2double T);
+  su2double dBstar_mudT_rho(su2double T);
+  su2double dMu_0dT_rho(su2double T);
+  su2double dMu_1dT_rho(su2double T);
+  su2double dSstar_mudT_rho(su2double T);
+  su2double dDeltaMudrho_T(su2double T, su2double rho);
+  su2double dDeltaMudT_rho(su2double T, su2double rho);
+
+
+public:
+
+  /*!
+   * \brief Constructor of the class.
+   */
+  CViscosityToluene(void);
+
+  /*!
+   * \brief Constructor of the class.
+   */
+//  CViscosityToluene(su2double mu_ref, su2double t_ref, su2double s);
+
+  /*!
+   * \brief Destructor of the class.
+   */
+  virtual ~CViscosityToluene(void);
+
+  /*!
+   * \brief Set Viscosity.
+   */
+  void SetViscosity(su2double T, su2double rho);
+
+  /*!
+   * \brief Set Viscosity Derivatives.
+   */
+  void SetDerViscosity(su2double T, su2double rho);
+
+};
+
 /*!
  * \class CThermalConductivityModel
  * \brief Main class for defining the Transport-Physical Model
@@ -283,6 +340,59 @@ public:
      * \brief Constructor of the class.
      */
       CConstantPrandtl(su2double pr_const);
+
+    /*!
+     * \brief Set Thermal conductivity.
+     * \brief par1 -> Cp.
+     * \brief par2 -> Mu.
+     */
+    void SetConductivity(su2double T, su2double rho, su2double mu, su2double cp);
+
+    /*!
+     * \brief Set Thermal conductivity derivatives.
+     */
+    void SetDerConductivity(su2double T, su2double rho, su2double dmudrho_T, su2double dmudT_rho, su2double cp);
+
+};
+
+
+
+class CConductivityToluene : public CConductivityModel {
+protected:
+  su2double      Pr_const;    /*!< \brief Prandtl's number. */
+  su2double 	 T_c, rho_c;
+  su2double 	 Kt_0(su2double T);
+  su2double 	 DeltaKt(su2double T, su2double rho);
+  su2double 	 DeltaKt_c(su2double T, su2double rho);
+  su2double 	 dDeltaKtdrho_T(su2double T, su2double rho);
+  su2double 	 dDeltaKtdT_rho(su2double T, su2double rho);
+  su2double 	 dKt_0dT_rho(su2double T);
+
+  su2double 	 B_11, B_21;
+  su2double 	 B_12, B_22;
+  su2double 	 B_13, B_23;
+  su2double 	 B_14, B_24;
+  su2double 	 B_15, B_25;
+  su2double 	 B_16, B_26;
+  su2double      C_1, C_2, C_3;
+
+
+public:
+
+    /*!
+     * \brief Constructor of the class.
+     */
+    CConductivityToluene(void);
+
+    /*!
+     * \brief Destructor of the class.
+     */
+    virtual ~CConductivityToluene(void);
+
+    /*!
+     * \brief Constructor of the class.
+     */
+//    CConductivityToluene();
 
     /*!
      * \brief Set Thermal conductivity.

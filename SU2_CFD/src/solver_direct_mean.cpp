@@ -3973,12 +3973,18 @@ void CEulerSolver::SetNondimensionalization(CGeometry *geometry, CConfig *config
           cout << "Sutherland constant (non-dim): "<< config->GetMu_SND()<< endl;
           break;
 
+        case TOLUENE_VISCOSITY:
+          cout << "Viscosity Model: TOLUENE_VISCOSITY "<< endl;
+          break;
       }
       switch (config->GetKind_ConductivityModel()) {
 
         case CONSTANT_PRANDTL:
           cout << "Conductivity Model: CONSTANT_PRANDTL  "<< endl;
           cout << "Prandtl: " << config->GetPrandtl_Lam()<< endl;
+          break;
+        case TOLUENE_CONDUCTIVITY:
+          cout << "Conductivity Model: TOLUENE_CONDUCTIVITY  "<< endl;
           break;
 
         case CONSTANT_CONDUCTIVITY:
