@@ -3,7 +3,6 @@
 *.lo
 *.o
 .settings/
-*.cproject
 
 # Autoconf/Automake
 *.Po
@@ -55,6 +54,6 @@ SU2_DIRECTDIFF/
 
 # ignore the bin/ directory
 bin/
-
+.cproject
 # ignore swap files
 *.swp
