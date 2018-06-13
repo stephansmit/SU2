@@ -2,7 +2,8 @@
 *.slo
 *.lo
 *.o
-
+.settings/
+.cproject
 # Autoconf/Automake
 *.Po
 *.dirstamp
