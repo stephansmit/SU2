@@ -88,6 +88,13 @@ void CFluidModel::SetThermalConductivityModel (CConfig *config) {
       ThermalConductivity = new CConductivityToluene();
     break;
   }
-  
 }
+void CFluidModel::SetThermalConductivityModelDirect(CConductivityModel *ConductivityModel) {
+  ThermalConductivity = ConductivityModel;
+}
+
+void CFluidModel::SetLaminarViscosityModelDirect(CViscosityModel *ViscosityModel) {
+	LaminarViscosity = ViscosityModel;
+}
+
 

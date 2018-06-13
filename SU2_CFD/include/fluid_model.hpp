@@ -216,7 +216,8 @@ public:
 		void SetLaminarViscosityModel (CConfig *config);
 
 		/*!
-		 * \brief Set thermal conductivity model.
+		 * \brief Se    FluidModelPR->Se
+		 * t thermal conductivity model.
 		 */
 		void SetThermalConductivityModel (CConfig *config);
 
@@ -295,6 +296,12 @@ public:
 		 *
 		 */
 		virtual void ComputeDerivativeNRBC_Prho (su2double P, su2double rho );
+
+
+		void SetLaminarViscosityModelDirect(CViscosityModel *ViscosityModel);
+
+		void SetThermalConductivityModelDirect(CConductivityModel *ConductivityModel );
+
 
 };
 
