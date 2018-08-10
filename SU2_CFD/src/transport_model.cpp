@@ -94,6 +94,8 @@ void CSutherland::SetDerViscosity(su2double T, su2double rho) {
 
 }
 
+
+
 /*-------------------------------------------------*/
 /*---------- Thermal Conductivity Models ----------*/
 /*-------------------------------------------------*/

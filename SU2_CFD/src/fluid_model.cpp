@@ -32,7 +32,6 @@
  */
 
 #include "../include/fluid_model.hpp"
-
 CFluidModel::CFluidModel(void) {
 
   /*--- Attributes initialization ---*/
@@ -48,15 +47,16 @@ CFluidModel::CFluidModel(void) {
   dTdrho_e = 0.0;
   dTde_rho = 0.0;
   Cp       = 0.0;
-
   LaminarViscosity = NULL;
   ThermalConductivity = NULL;
+  LookUpTable = NULL;
 
 }
 
 CFluidModel::~CFluidModel(void) {
   if (LaminarViscosity!= NULL) delete LaminarViscosity;
   if (ThermalConductivity!= NULL) delete ThermalConductivity;
+  if (LookUpTable!= NULL) delete LookUpTable;
 }
 
 void CFluidModel::SetLaminarViscosityModel (CConfig *config) {
@@ -71,8 +71,10 @@ void CFluidModel::SetLaminarViscosityModel (CConfig *config) {
   case TOLUENE_VISCOSITY:
     LaminarViscosity = new CViscosityToluene();
     break;
+  case LUT_VISCOSITY:
+	LaminarViscosity = new CViscosityLUT(LookUpTable);
+	break;
   }
-  
 }
 
 void CFluidModel::SetThermalConductivityModel (CConfig *config) {
@@ -85,10 +87,16 @@ void CFluidModel::SetThermalConductivityModel (CConfig *config) {
     ThermalConductivity = new CConstantPrandtl(config->GetPrandtl_Lam());
     break;
   case TOLUENE_CONDUCTIVITY:
-      ThermalConductivity = new CConductivityToluene();
+    ThermalConductivity = new CConductivityToluene();
     break;
+  case LUT_VISCOSITY:
+	ThermalConductivity = new CConductivityLUT(LookUpTable);
+	break;
   }
 }
+
+
+
 void CFluidModel::SetThermalConductivityModelDirect(CConductivityModel *ConductivityModel) {
   ThermalConductivity = ConductivityModel;
 }

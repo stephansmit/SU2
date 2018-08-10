@@ -3662,6 +3662,21 @@ void CEulerSolver::SetNondimensionalization(CGeometry *geometry, CConfig *config
       }
       break;
 
+    case LUT_TABLE:
+
+      FluidModel = new CLUTFluidModel(config->GetTableName())
+	  if (free_stream_temp) {
+	    FluidModel->SetTDState_PT(Pressure_FreeStream, Temperature_FreeStream);
+	    Density_FreeStream = FluidModel->GetDensity();
+	    config->SetDensity_FreeStream(Density_FreeStream);
+	  }
+	  else {
+	    FluidModel->SetTDState_Prho(Pressure_FreeStream, Density_FreeStream );
+	    Temperature_FreeStream = FluidModel->GetTemperature();
+	    config->SetTemperature_FreeStream(Temperature_FreeStream);
+	  }
+	  break;
+
   }
 
   Mach2Vel_FreeStream = FluidModel->GetSoundSpeed();
@@ -3854,7 +3869,10 @@ void CEulerSolver::SetNondimensionalization(CGeometry *geometry, CConfig *config
                                      config->GetTemperature_Critical()/config->GetTemperature_Ref(), config->GetAcentric_Factor());
       FluidModel->SetEnergy_Prho(Pressure_FreeStreamND, Density_FreeStreamND);
       break;
-      
+    case LUT_GAS:
+      FluidModel = new CLUTFluidModel(config->GetTableName());
+      FluidModel->SetEnergy_Prho(Pressure_FreeStreamND, Density_FreeStreamND);
+      break;
   }
   
   Energy_FreeStreamND = FluidModel->GetStaticEnergy() + 0.5*ModVel_FreeStreamND*ModVel_FreeStreamND;

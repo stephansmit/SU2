@@ -48,6 +48,7 @@
 #include "math.h"
 
 #include "../../Common/include/datatype_structure.hpp"
+#include "../include/look_up_table.hpp"
 
 using namespace std;
 
@@ -102,7 +103,6 @@ public:
     virtual   void SetDerViscosity(su2double T, su2double rho);
 
 };
-
 
 /*!
  * \class CConstantViscosity
@@ -234,6 +234,46 @@ public:
 
 };
 
+class CViscosityLUT : public CViscosityModel {
+protected:
+  CLookUpTable *LookUpTable;
+
+public:
+
+  /*!
+   * \brief Constructor of the class.
+   */
+  CViscosityLUT(void);
+
+  /*!
+   * \brief Constructor of the class.
+   */
+  CViscosityLUT(CLookUpTable* lookuptable);
+
+
+  /*!
+   * \brief Constructor of the class.
+   */
+//  CViscosityToluene(su2double mu_ref, su2double t_ref, su2double s);
+
+  /*!
+   * \brief Destructor of the class.
+   */
+  virtual ~CViscosityLUT(void);
+
+  /*!
+   * \brief Set Viscosity.
+   */
+  void SetViscosity(su2double T, su2double rho);
+
+  /*!
+   * \brief Set Viscosity Derivatives.
+   */
+  void SetDerViscosity(su2double T, su2double rho);
+
+};
+
+
 /*!
  * \class CThermalConductivityModel
  * \brief Main class for defining the Transport-Physical Model
@@ -356,7 +396,6 @@ public:
 };
 
 
-
 class CConductivityToluene : public CConductivityModel {
 protected:
   su2double      Pr_const;    /*!< \brief Prandtl's number. */
@@ -405,6 +444,53 @@ public:
      * \brief Set Thermal conductivity derivatives.
      */
     void SetDerConductivity(su2double T, su2double rho, su2double dmudrho_T, su2double dmudT_rho, su2double cp);
+
+};
+
+class CConductivityLUT : public CConductivityModel {
+protected:
+
+  su2double 	 Kt_0(su2double T);
+  su2double 	 DeltaKt(su2double T, su2double rho);
+  su2double 	 DeltaKt_c(su2double T, su2double rho);
+  su2double 	 dDeltaKtdrho_T(su2double T, su2double rho);
+  su2double 	 dDeltaKtdT_rho(su2double T, su2double rho);
+  su2double 	 dKt_0dT_rho(su2double T);
+  CLookUpTable*   LookUpTable;
+
+public:
+
+    /*!
+     * \brief Constructor of the class.
+     */
+    CConductivityLUT(void);
+
+    /*!
+    * \brief Constructor of the class.
+    */
+    CConductivityLUT(CLookUpTable* lookuptable);
+
+    /*!
+     * \brief Destructor of the class.
+     */
+    virtual ~CConductivityLUT(void);
+
+    /*!
+     * \brief Constructor of the class.
+     */
+//    CConductivityToluene();
+
+    /*!
+     * \brief Set Thermal conductivity.
+     * \brief par1 -> Cp.
+     * \brief par2 -> Mu.
+     */
+    void SetConductivity(su2double T, su2double rho);
+
+    /*!
+     * \brief Set Thermal conductivity derivatives.
+     */
+    void SetDerConductivity(su2double T, su2double rho);
 
 };
 

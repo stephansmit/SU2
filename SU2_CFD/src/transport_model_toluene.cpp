@@ -36,8 +36,9 @@
  */
 
 #include "../include/transport_model.hpp"
+
 /*-------------------------------------------------*/
-/*---------- Viscosity Conductivity Model ---------*/
+/*--------------- Viscosity Model -----------------*/
 /*-------------------------------------------------*/
 
 CViscosityToluene::CViscosityToluene(void) : CViscosityModel() {
