@@ -43,14 +43,14 @@ CLUTFluidModel::CLUTFluidModel() : CFluidModel() {
 }
 
 
-CLUTFluidModel::CLUTFluidModel(string table_name,string fluid, string tab_dist, int table_imax, int table_jmax, string interpolation_scheme) : CFluidModel() {
-  Gamma = 0;
-  Gamma_Minus_One = Gamma - 1.0;
-  Gas_Constant = 0.0;
-  Cp = Gamma/Gamma_Minus_One*Gas_Constant;
-  LookUpTable = new CLookUpTable(table_name, fluid, tab_dist, table_imax, table_jmax, interpolation_scheme);
-
-}
+//CLUTFluidModel::CLUTFluidModel(string table_name,string fluid, string tab_dist, int table_imax, int table_jmax, string interpolation_scheme) : CFluidModel() {
+//  Gamma = 0;
+//  Gamma_Minus_One = Gamma - 1.0;
+//  Gas_Constant = 0.0;
+//  Cp = Gamma/Gamma_Minus_One*Gas_Constant;
+//  LookUpTable = new CLookUpTable(table_name, fluid, tab_dist, table_imax, table_jmax, interpolation_scheme);
+//
+//}
 CLUTFluidModel::CLUTFluidModel(CConfig *config) : CFluidModel() {
   Gamma = 0;
   Gamma_Minus_One = Gamma - 1.0;

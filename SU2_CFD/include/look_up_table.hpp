@@ -39,6 +39,7 @@
 #include <iostream>
 #include <string>
 #include <cmath>
+#include "CoolProp.h"
 
 #define LEN_COMPONENTS 32
 
@@ -58,8 +59,8 @@ string table_filename;
 string table_fluid;
 string table_distribution;
 string table_interpolation_scheme;
-su2double rhomin, rhomax;
-su2double Tmin, Tmax;
+double rhomin, rhomax;
+double Tmin, Tmax;
 
 struct FluidState {
         double P;
@@ -99,12 +100,23 @@ void InitializeTableStateRhoTWithCP(void);
 void ReadTableRhoT(string table_name);
 int ReadTableBIN(const char *fileName);
 void SaveTableBIN(const char *fileName);
-
+void SaveTableTEC(const char *fileName);
 
 su2double InterpolateTransferTable(string columns, su2double column1_value,su2double column2_value);
 int InterpolatePropertiesTable(string table_name, su2double rho,su2double T);
+double calc_derivative( string property,
+						string withrespect_to,
+						string at_constant,
+						string InputSpec,
+						double input1,
+						double input2,
+						string fluid_name);
 
-
+void coolprop_allprops_su2( string InputSpec,
+							string fluid_name,
+							double input1,
+							double input2,
+							struct FluidState &state);
 
 public:
 		FluidState **TableState;
@@ -118,7 +130,16 @@ public:
 		/*!
 		 * \brief Constructor of the class.
 		 */
-		CLookUpTable(string table_name,string fluid, string tab_dist, int table_imax, int table_jmax, string interpolation_scheme );
+		CLookUpTable(string table_name,
+					 string fluid,
+					 string tab_dist,
+					 int table_imax,
+					 int table_jmax,
+					 double rho_min,
+					 double rho_max,
+					 double T_min,
+					 double T_max,
+					 string interpolation_scheme );
 
 
 		/*!

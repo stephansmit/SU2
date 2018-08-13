@@ -50,10 +50,14 @@ CLookUpTable::CLookUpTable(CConfig *config){
 	  MPI_Comm_rank(MPI_COMM_WORLD, &rank);
 	#endif
 
-	table_filename = config->GetTable_Name;
-	table_fluid= config->GetTable_Fluid;
+	table_filename = config->GetTable_Name();
+	table_fluid= config->GetTable_Fluid();
 	table_distribution = config->GetTable_Distribution();
 	table_interpolation_scheme = config->GetTable_InterpolationScheme();
+	rhomin = config->GetTable_RhoMin();
+	rhomax = config->GetTable_RhoMax();
+	Tmin = config->GetTable_TMin();
+	Tmax = config->GetTable_TMax();
 	imax = config->GetTable_IMax();
 	jmax = config->GetTable_JMax();
 
@@ -80,15 +84,25 @@ CLookUpTable::CLookUpTable(CConfig *config){
     	TableState[i] = new FluidState[jmax];
 
     if (rank == MASTER_NODE){
-    	ReadTableRhoT(table_name);
+    	ReadTableRhoT(table_filename);
     }
     else {
-    	ReadTableRhoT(table_name);
+    	ReadTableRhoT(table_filename);
     }
 
 
 }
-CLookUpTable::CLookUpTable(string table_name,string fluid, string tab_dist, int table_imax, int table_jmax, string interpolation_scheme ){
+CLookUpTable::CLookUpTable(string table_name,
+						   string fluid,
+						   string tab_dist,
+						   int table_imax,
+						   int table_jmax,
+						   double rho_min,
+						   double rho_max,
+						   double T_min,
+						   double T_max,
+						   string interpolation_scheme
+						   ){
 	int rank = MASTER_NODE;
 	#ifdef HAVE_MPI
 	  int rank;
@@ -101,7 +115,10 @@ CLookUpTable::CLookUpTable(string table_name,string fluid, string tab_dist, int 
 	table_interpolation_scheme = interpolation_scheme;
 	imax = table_imax;
 	jmax = table_jmax;
-
+	rhomin = rho_min;
+	rhomax = rho_max;
+	Tmin = T_min;
+	Tmax = T_max;
 	OutputState = new FluidState;
 	TableState = new FluidState*[imax];
     for (int i=0; i<imax; i++)
@@ -109,7 +126,7 @@ CLookUpTable::CLookUpTable(string table_name,string fluid, string tab_dist, int 
 
     if (rank == MASTER_NODE){
     	InitializeTableStateRhoTWithCP();
-    	SaveTableBIN(table_name.c_str());
+    	SaveTableTEC(table_name.c_str());
     }
     else {
     	ReadTableRhoT(table_name);
@@ -132,13 +149,32 @@ void CLookUpTable::InitializeTableStateRhoTWithCP(void){
       for (int i=0; i<imax; i++)
       {
         double temp = Tmin_1ph-273.15 + (double)i/(imax-1.0)*(Tmax-Tmin_1ph);
-//        fluidprop_allpropsjoe("Td", temp, dens, &TableState[i][j]);
+        coolprop_allprops_su2("TD", table_fluid, temp, dens, TableState[i][j]);
         if (TableState[i][j].cp<0.0) TableState[i][j].cp=0.0;
         if (TableState[i][j].lambda<0.0) TableState[i][j].lambda=0.0;
       }
     }
 }
 
+// Save table in Tecplot format
+void CLookUpTable::SaveTableTEC(const char *fileName)
+{
+  FILE *fp = fopen(fileName, "wt");
+  fprintf(fp, "TITLE=\"table\"\n");
+  fprintf(fp, "VARIABLES=\"d\" \"T\" \"v\" \"s\" \"P\" \"u\" \"h\" \"eta\" \"lambda\" \"cp\" \"cv\" \"c\" \"alpha\" \"beta\" \"zeta\"\n");// \"deta_drho\" \"deta_dT\" \"dlam_drho\" \"dlam_dT\" \"one_cf\"\n");
+  fprintf(fp, "ZONE I=%d, J=%d DATAPACKING=POINT\n", imax, jmax);
+
+//  double mmol = fluidprop_mmol();
+//  double R = 8.314462175 / mmol;
+
+  for (int j=0; j<jmax; j++)
+    for (int i=0; i<imax; i++)
+      fprintf(fp, "%.8le\t%.8le\t%.8le\t%.8le\t%.8le\t%.8le\t%.8le\t%.8le\t%.8le\t%.8le\t%.8le\t%.8le\t%.8le\t%.8le\t%.8le\n",//%.8le\t%.8le\t%.8le\t%.8le\t%.8le\n",
+    		  TableState[i][j].d, TableState[i][j].T, TableState[i][j].v, TableState[i][j].s, TableState[i][j].P, TableState[i][j].u, TableState[i][j].h, TableState[i][j].eta, TableState[i][j].lambda,
+    		  TableState[i][j].cp, TableState[i][j].cv, TableState[i][j].c, TableState[i][j].alpha, TableState[i][j].beta, TableState[i][j].zeta);//, state[i][j].deta_drho, state[i][j].deta_dT,
+              //state[i][j].dlam_drho, state[i][j].dlam_dT, 1.0 - (state[i][j].P*1.0e5/state[i][j].d/R/(state[i][j].T+273.15)));
+  fclose(fp);
+}
 
 void CLookUpTable::SaveTableBIN(const char *fileName)
 {
@@ -462,3 +498,49 @@ double CLookUpTable::bilinInterpol( double a1,
   double v2 = b1+fact1*(b2-b1);
   return (v1 + fact2*(v2-v1));
 };
+
+void CLookUpTable::coolprop_allprops_su2(string InputSpec, string fluid_name, double input1, double input2, struct FluidState &state){
+    state.P=CoolProp::PropsSI("P", string(1,InputSpec[0]), input1, string(1,InputSpec[1]), input2, fluid_name);
+    state.T=CoolProp::PropsSI("T", string(1,InputSpec[0]), input1, string(1,InputSpec[1]), input2, fluid_name);
+    state.d=CoolProp::PropsSI("D", string(1,InputSpec[0]), input1, string(1,InputSpec[1]), input2, fluid_name);
+    state.v=1.0/state.d;
+    state.h=CoolProp::PropsSI("H", string(1,InputSpec[0]), input1, string(1,InputSpec[1]), input2, fluid_name);
+    state.s=CoolProp::PropsSI("S", string(1,InputSpec[0]), input1, string(1,InputSpec[1]), input2, fluid_name);
+    state.u=CoolProp::PropsSI("U", string(1,InputSpec[0]), input1, string(1,InputSpec[1]), input2, fluid_name);
+    state.cv=CoolProp::PropsSI("CVMASS", string(1,InputSpec[0]), input1, string(1,InputSpec[1]), input2, fluid_name);
+    state.cp=CoolProp::PropsSI("CPMASS", string(1,InputSpec[0]), input1, string(1,InputSpec[1]), input2, fluid_name);
+    state.c=CoolProp::PropsSI("A", string(1,InputSpec[0]), input1, string(1,InputSpec[1]), input2, fluid_name);
+    state.eta=CoolProp::PropsSI("V", string(1,InputSpec[0]), input1, string(1,InputSpec[1]), input2, fluid_name);
+    state.lambda=CoolProp::PropsSI("L", string(1,InputSpec[0]), input1, string(1,InputSpec[1]), input2, fluid_name);
+    state.phase=CoolProp::PropsSI("PHASE", string(1,InputSpec[0]), input1, string(1,InputSpec[1]), input2, fluid_name);
+    state.dlam_dT=calc_derivative("L", "T", "D", InputSpec, input1, input2, fluid_name);
+    state.dlam_drho=calc_derivative("L", "D", "T", InputSpec, input1, input2, fluid_name);
+    state.deta_dT=calc_derivative("V", "T", "D", InputSpec, input1, input2, fluid_name);
+    state.deta_drho=calc_derivative("V", "D", "T", InputSpec, input1, input2, fluid_name);
+    state.dPdrho_e=CoolProp::PropsSI("d(P)/d(D)|U", string(1,InputSpec[0]), input1, string(1,InputSpec[1]), input2, fluid_name);
+    state.dPde_rho=CoolProp::PropsSI("d(P)/d(U)|D", string(1,InputSpec[0]), input1, string(1,InputSpec[1]), input2, fluid_name);
+    state.dTdrho_e=CoolProp::PropsSI("d(T)/d(D)|U", string(1,InputSpec[0]), input1, string(1,InputSpec[1]), input2, fluid_name);
+    state.dTde_rho=CoolProp::PropsSI("d(T)/d(U)|D", string(1,InputSpec[0]), input1, string(1,InputSpec[1]), input2, fluid_name);
+    state.dhdrho_P=CoolProp::PropsSI("d(H)/d(D)|P", string(1,InputSpec[0]), input1, string(1,InputSpec[1]), input2, fluid_name);
+    state.dhdP_rho=CoolProp::PropsSI("d(H)/d(P)|D", string(1,InputSpec[0]), input1, string(1,InputSpec[1]), input2, fluid_name);
+    state.dsdrho_P=CoolProp::PropsSI("d(S)/d(D)|P", string(1,InputSpec[0]), input1, string(1,InputSpec[1]), input2, fluid_name);
+    state.dsdP_rho=CoolProp::PropsSI("d(S)/d(P)|D", string(1,InputSpec[0]), input1, string(1,InputSpec[1]), input2, fluid_name);
+}
+
+double CLookUpTable::calc_derivative(string property, string withrespect_to, string at_constant, string InputSpec, double input1, double input2, string fluid_name){
+
+    double fph, fmh;
+    double eps=0.0001;
+    if (string(1,InputSpec[0])==withrespect_to) {
+        fph = CoolProp::PropsSI(property, string(1,InputSpec[0]), input1+.5*eps, string(1,InputSpec[1]), input2, fluid_name);
+        fmh = CoolProp::PropsSI(property, string(1,InputSpec[0]), input1-.5*eps, string(1,InputSpec[1]), input2, fluid_name);
+    }
+    else if (string(1,InputSpec[1])==withrespect_to) {
+        fph = CoolProp::PropsSI(property, string(1,InputSpec[0]), input1, string(1,InputSpec[1]), input2+.5*eps, fluid_name);
+        fmh = CoolProp::PropsSI(property, string(1,InputSpec[0]), input1, string(1,InputSpec[1]), input2-.5*eps, fluid_name);
+    }
+    return (fph-fmh)/eps;
+}
+
+
+
