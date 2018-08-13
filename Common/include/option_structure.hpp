@@ -439,6 +439,32 @@ static const map<string, ENUM_FLUIDMODEL> FluidModel_Map = CCreateMap<string, EN
 ("LUT_GAS", LUT_GAS);
 
 /*!
+ * \brief types of interpolation scheme of table
+ */
+enum ENUM_TABLEINTERPOLATIONSCHEME {
+	BILINEAR = 0,
+	POLYNOMIAL = 1
+};
+
+static const map<string, ENUM_TABLEINTERPOLATIONSCHEME> TableInterpolationScheme_Map = CCreateMap<string, ENUM_TABLEINTERPOLATIONSCHEME>
+("BILINEAR", BILINEAR)
+("POLYNOMIAL", POLYNOMIAL);
+
+/*!
+ * \brief types of distribution type of table
+ */
+enum ENUM_TABLEDISTRIBUTION {
+	UNIFORM = 0,
+	LOGARITMIC = 1
+};
+
+static const map<string, ENUM_TABLEDISTRIBUTION> TableDistribution_Map = CCreateMap<string, ENUM_TABLEDISTRIBUTION>
+("UNIFORM", UNIFORM)
+("LOGARITMIC", LOGARITMIC);
+
+
+
+/*!
  * \brief types of initialization option
  */
 

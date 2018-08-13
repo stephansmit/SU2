@@ -41,15 +41,14 @@ inline su2double CLookUpTable::GetEntropy () { return OutputState->s; }
 inline su2double CLookUpTable::GetStaticEnergy () { return OutputState->u; }
 inline su2double CLookUpTable::GetTemperature () { return OutputState->T; }
 inline su2double CLookUpTable::GetCp () { return OutputState->cp; }
-
-inline su2double CLookUpTable::GetdPdrho_e () { return dPdrho_e; }
-inline su2double CLookUpTable::GetdPde_rho () { return dPde_rho; }
-inline su2double CLookUpTable::GetdTdrho_e () { return dTdrho_e; }
-inline su2double CLookUpTable::GetdTde_rho () { return dTde_rho; }
-inline su2double CLookUpTable::Getdhdrho_P () {return dhdrho_P;}
-inline su2double CLookUpTable::GetdhdP_rho () {return dhdP_rho;}
-inline su2double CLookUpTable::Getdsdrho_P () {return dsdrho_P;}
-inline su2double CLookUpTable::GetdsdP_rho () {return dsdP_rho;}
+inline su2double CLookUpTable::GetdPdrho_e () { return OutputState->dPdrho_e; }
+inline su2double CLookUpTable::GetdPde_rho () { return OutputState->dPde_rho; }
+inline su2double CLookUpTable::GetdTdrho_e () { return OutputState->dTdrho_e; }
+inline su2double CLookUpTable::GetdTde_rho () { return OutputState->dTde_rho; }
+inline su2double CLookUpTable::Getdhdrho_P () {return OutputState->dhdrho_P;}
+inline su2double CLookUpTable::GetdhdP_rho () {return OutputState->dhdP_rho;}
+inline su2double CLookUpTable::Getdsdrho_P () {return OutputState->dsdrho_P;}
+inline su2double CLookUpTable::GetdsdP_rho () {return OutputState->dsdP_rho;}
 inline su2double CLookUpTable::GetLaminarViscosity (){ return OutputState->eta;} 
 inline su2double CLookUpTable::Getdmudrho_T () { return OutputState->deta_drho;}
 inline su2double CLookUpTable::GetdmudT_rho () { return OutputState->deta_dT;}

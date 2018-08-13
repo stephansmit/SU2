@@ -708,6 +708,26 @@ inline su2double CConfig::GetTemperature_Critical(void) { return Temperature_Cri
 
 inline su2double CConfig::GetAcentric_Factor(void) { return Acentric_Factor; }
 
+inline string CConfig::GetTable_Name(void) { return Table_Name; }
+
+inline string CConfig::GetTable_Fluid(void) { return Table_Fluid; }
+
+inline unsigned short CConfig::GetTable_InterpolationScheme(void) { return Table_InterpolationScheme; }
+
+inline unsigned short CConfig::GetTable_Distribution(void) { return Table_Distribution; }
+
+inline unsigned short CConfig::GetTable_IMax(void) { return Table_IMax; }
+
+inline unsigned short CConfig::GetTable_JMax(void) { return Table_JMax; }
+
+inline su2double CConfig::GetTable_TMin(void) { return Table_TMin; }
+
+inline su2double CConfig::GetTable_TMax(void) { return Table_TMax; }
+
+inline su2double CConfig::GetTable_RhoMin(void) { return Table_RhoMin; }
+
+inline su2double CConfig::GetTable_RhoMax(void) { return Table_RhoMax; }
+
 inline unsigned short CConfig::GetKind_ViscosityModel(void) { return Kind_ViscosityModel; }
 
 inline unsigned short CConfig::GetKind_ConductivityModel(void) { return Kind_ConductivityModel; }

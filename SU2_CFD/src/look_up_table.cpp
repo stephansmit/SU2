@@ -37,20 +37,124 @@ CLookUpTable::CLookUpTable(void) {
 	imax = 0;
 	jmax = 0;
 	TableState = NULL;
+	OutputState = NULL;
+	table_filename = "";
+	table_fluid = "";
 
 }
 
-CLookUpTable::CLookUpTable(string table_name,string table_dist, int column1_size, int column2_size){
-	imax = column1_size;
-	jmax = column2_size;
-	tab_dist = table_dist;
+CLookUpTable::CLookUpTable(CConfig *config){
+	int rank = MASTER_NODE;
+	#ifdef HAVE_MPI
+	  int rank;
+	  MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+	#endif
+
+	table_filename = config->GetTable_Name;
+	table_fluid= config->GetTable_Fluid;
+	table_distribution = config->GetTable_Distribution();
+	table_interpolation_scheme = config->GetTable_InterpolationScheme();
+	imax = config->GetTable_IMax();
+	jmax = config->GetTable_JMax();
+
+	switch (config->GetTable_InterpolationScheme()) {
+	  case BILINEAR:
+	    table_interpolation_scheme = "BILINEAR";
+	    break;
+	  case POLYNOMIAL:
+	    table_interpolation_scheme = "POLYNOMIAL";
+	    break;
+	}
+	switch (config->GetTable_Distribution()) {
+	  case UNIFORM:
+		table_distribution = "UNIFORM";
+		break;
+	  case LOGARITMIC:
+		table_distribution = "LOGARITMIC";
+		break;
+	}
+
 	OutputState = new FluidState;
-	ReadTableRhoT(table_name);
+	TableState = new FluidState*[imax];
+    for (int i=0; i<imax; i++)
+    	TableState[i] = new FluidState[jmax];
+
+    if (rank == MASTER_NODE){
+    	ReadTableRhoT(table_name);
+    }
+    else {
+    	ReadTableRhoT(table_name);
+    }
+
+
 }
+CLookUpTable::CLookUpTable(string table_name,string fluid, string tab_dist, int table_imax, int table_jmax, string interpolation_scheme ){
+	int rank = MASTER_NODE;
+	#ifdef HAVE_MPI
+	  int rank;
+	  MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+	#endif
+
+	table_filename = table_name;
+	table_fluid= fluid;
+	table_distribution  = tab_dist;
+	table_interpolation_scheme = interpolation_scheme;
+	imax = table_imax;
+	jmax = table_jmax;
+
+	OutputState = new FluidState;
+	TableState = new FluidState*[imax];
+    for (int i=0; i<imax; i++)
+    	TableState[i] = new FluidState[jmax];
+
+    if (rank == MASTER_NODE){
+    	InitializeTableStateRhoTWithCP();
+    	SaveTableBIN(table_name.c_str());
+    }
+    else {
+    	ReadTableRhoT(table_name);
+    }
+
+}
+
+
 
 CLookUpTable::~CLookUpTable(void) {
 
 }
+void CLookUpTable::InitializeTableStateRhoTWithCP(void){
+    for (int j=0; j<jmax; j++)
+    {
+      double dens = rhomin + (double)j/(jmax-1.0)*(rhomax-rhomin);
+      if (strcmp(table_distribution.c_str(), "LOG")==0)
+        dens = pow(10.0, log10(rhomin) + (double)j/(jmax-1.0)*(log10(rhomax)-log10(rhomin)));
+      double Tmin_1ph = Tmin;
+      for (int i=0; i<imax; i++)
+      {
+        double temp = Tmin_1ph-273.15 + (double)i/(imax-1.0)*(Tmax-Tmin_1ph);
+//        fluidprop_allpropsjoe("Td", temp, dens, &TableState[i][j]);
+        if (TableState[i][j].cp<0.0) TableState[i][j].cp=0.0;
+        if (TableState[i][j].lambda<0.0) TableState[i][j].lambda=0.0;
+      }
+    }
+}
+
+
+void CLookUpTable::SaveTableBIN(const char *fileName)
+{
+  FILE *fp = fopen(fileName, "wb");
+
+  fwrite(&imax, sizeof(int), 1, fp);
+  fwrite(&jmax, sizeof(int), 1, fp);
+
+  for (int i=0; i<imax; i++)
+    for (int j=0; j<jmax; j++)
+      fwrite(&TableState[i][j], sizeof(FluidState), 1, fp);
+
+  fclose(fp);
+}
+
+
 
 int CLookUpTable::ReadTableBIN(const char *fileName)
 {
@@ -73,9 +177,6 @@ int CLookUpTable::ReadTableBIN(const char *fileName)
 
 
 void CLookUpTable::ReadTableRhoT(string filename){
-	TableState = new FluidState*[imax];
-    for (int i=0; i<imax; i++)
-    	TableState[i] = new FluidState[jmax];
     ReadTableBIN(filename.c_str());
 }
 
@@ -145,7 +246,7 @@ void CLookUpTable::fluidprop_allprops_( const char* InputSpec,
       else                   {dens = 1.0/Input2; sndVal = Input1;}
 
       double ff;
-      if (strcmp(tab_dist.c_str(), "LOG")==0) ff = (log10(dens)-log10(TableState[0][0].d))/(log10(TableState[0][jmax-1].d)-log10(TableState[0][0].d));
+      if (strcmp(table_distribution.c_str(), "LOG")==0) ff = (log10(dens)-log10(TableState[0][0].d))/(log10(TableState[0][jmax-1].d)-log10(TableState[0][0].d));
       else                                    ff = (dens-TableState[0][0].d)/(TableState[0][jmax-1].d-TableState[0][0].d);
       jTab = ceil(ff*(double)(jmax-1));
 
@@ -207,7 +308,7 @@ void CLookUpTable::fluidprop_allprops_( const char* InputSpec,
 
         // find the cell
         double ff;
-        if (strcmp(tab_dist.c_str(), "LOG")==0) ff = (log10(dens)-log10(TableState[0][0].d))/(log10(TableState[0][jmax-1].d)-log10(TableState[0][0].d));
+        if (strcmp(table_distribution.c_str(), "LOG")==0) ff = (log10(dens)-log10(TableState[0][0].d))/(log10(TableState[0][jmax-1].d)-log10(TableState[0][0].d));
         else                                    ff = (dens-TableState[0][0].d)/(TableState[0][jmax-1].d-TableState[0][0].d);
         jTab = ceil(ff*(double)(jmax-1));
         fact1 = (dens-TableState[0][jTab-1].d)/(TableState[0][jTab].d-TableState[0][jTab-1].d);
@@ -289,6 +390,14 @@ void CLookUpTable::bilinInterpolState(FluidState &resState,
         resState.deta_dT   = bilinInterpol(TableState[i-1][j-1].deta_dT, TableState[i-1][j].deta_dT, TableState[i][j-1].deta_dT, TableState[i][j].deta_dT, fact1, fact2);
         resState.dlam_drho = bilinInterpol(TableState[i-1][j-1].dlam_drho, TableState[i-1][j].dlam_drho, TableState[i][j-1].dlam_drho, TableState[i][j].dlam_drho, fact1, fact2);
         resState.dlam_dT   = bilinInterpol(TableState[i-1][j-1].dlam_dT, TableState[i-1][j].dlam_dT, TableState[i][j-1].dlam_dT, TableState[i][j].dlam_dT, fact1, fact2);
+        resState.dPdrho_e  = bilinInterpol(TableState[i-1][j-1].dPdrho_e, TableState[i-1][j].dPdrho_e, TableState[i][j-1].dPdrho_e, TableState[i][j].dPdrho_e, fact1, fact2);
+        resState.dPde_rho  = bilinInterpol(TableState[i-1][j-1].dPde_rho, TableState[i-1][j].dPde_rho, TableState[i][j-1].dPde_rho, TableState[i][j].dPde_rho, fact1, fact2);
+        resState.dTdrho_e  = bilinInterpol(TableState[i-1][j-1].dTdrho_e, TableState[i-1][j].dTdrho_e, TableState[i][j-1].dTdrho_e, TableState[i][j].dTdrho_e, fact1, fact2);
+        resState.dTde_rho  = bilinInterpol(TableState[i-1][j-1].dTde_rho, TableState[i-1][j].dTde_rho, TableState[i][j-1].dTde_rho, TableState[i][j].dTde_rho, fact1, fact2);
+        resState.dhdrho_P  = bilinInterpol(TableState[i-1][j-1].dhdrho_P, TableState[i-1][j].dhdrho_P, TableState[i][j-1].dhdrho_P, TableState[i][j].dhdrho_P, fact1, fact2);
+        resState.dhdP_rho  = bilinInterpol(TableState[i-1][j-1].dhdP_rho, TableState[i-1][j].dhdP_rho, TableState[i][j-1].dhdP_rho, TableState[i][j].dhdP_rho, fact1, fact2);
+        resState.dsdrho_P  = bilinInterpol(TableState[i-1][j-1].dsdrho_P, TableState[i-1][j].dsdrho_P, TableState[i][j-1].dsdrho_P, TableState[i][j].dsdrho_P, fact1, fact2);
+        resState.dsdP_rho  = bilinInterpol(TableState[i-1][j-1].dsdP_rho, TableState[i-1][j].dsdP_rho, TableState[i][j-1].dsdP_rho, TableState[i][j].dsdP_rho, fact1, fact2);
         resState.i      = (double)i;
         resState.j      = (double)j;
       }

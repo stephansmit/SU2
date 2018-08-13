@@ -60,7 +60,7 @@ CFluidModel::~CFluidModel(void) {
 }
 
 void CFluidModel::SetLaminarViscosityModel (CConfig *config) {
-  
+
   switch (config->GetKind_ViscosityModel()) {
   case CONSTANT_VISCOSITY:
     LaminarViscosity = new CConstantViscosity(config->GetMu_ConstantND());

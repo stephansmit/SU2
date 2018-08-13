@@ -432,7 +432,13 @@ public:
 		/*!
 		 * \brief Constructor of the class.
 		 */
-  	   CLUTFluidModel(string table_name, string tab_dist,int column1_size, int column2_size) ;
+  	   CLUTFluidModel(string table_name,string fluid, string tab_dist, int table_imax, int table_jmax, string interpolation_scheme);
+
+		/*!
+		 * \brief Constructor of the class.
+		 */
+ 	   CLUTFluidModel(CConfig *config) ;
+
 
 
 		/*!

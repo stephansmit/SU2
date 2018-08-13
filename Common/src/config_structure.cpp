@@ -627,6 +627,35 @@ void CConfig::SetConfig_Options(unsigned short val_iZone, unsigned short val_nZo
   /* DESCRIPTION: Critical Density, default value for MDM */
    addDoubleOption("ACENTRIC_FACTOR", Acentric_Factor, 0.035);
 
+   /*--- Options related to LUT MODEL ---*/
+   /* DESCRIPTION: Name of table file */
+   addStringOption("TABLE_NAME", Table_Name, "table.bin");
+   /* DESCRIPTION: Name of the fluid as given in Coolprop*/
+   addStringOption("TABLE_FLUID", Table_Fluid, "Toluene");
+   /* DESCRIPTION: Interpolation scheme used for table interpolation */
+   addEnumOption("TABLE_INTERPOLATIONSCHEME", Table_InterpolationScheme, TableInterpolationScheme_Map, POLYNOMIAL);
+   /* DESCRIPTION: Distribution of the density column in table */
+   addEnumOption("TABLE_DISTRIBUTION", Table_Distribution, TableDistribution_Map, UNIFORM);
+
+   /* DESCRIPTION: Number of elements for column 1 (Density) table */
+   addUnsignedShortOption("TABLE_IMAX", Table_IMax, 100);
+   /* DESCRIPTION: Number of elements for column 2 (Temperature) in table */
+   addUnsignedShortOption("TABLE_JMAX", Table_JMax, 100);
+   /* DESCRIPTION: Minimum temperature in table */
+   addDoubleOption("TABLE_TMIN", Table_TMin, 300.);
+   /* DESCRIPTION: Maximum temperature in table */
+   addDoubleOption("TABLE_TMAX", Table_TMax, 600.);
+   /* DESCRIPTION: Minimum Density in table */
+   addDoubleOption("TABLE_RHOMAX", Table_RhoMin, 0.01);
+   /* DESCRIPTION: Maximum Density in table */
+   addDoubleOption("TABLE_RHOMIN", Table_RhoMax, 10.);
+
+
+
+
+
+
+
    /*--- Options related to Viscosity Model ---*/
   /*!\brief VISCOSITY_MODEL \n DESCRIPTION: model of the viscosity \n OPTIONS: See \link ViscosityModel_Map \endlink \n DEFAULT: SUTHERLAND \ingroup Config*/
   addEnumOption("VISCOSITY_MODEL", Kind_ViscosityModel, ViscosityModel_Map, SUTHERLAND);

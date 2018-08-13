@@ -847,6 +847,18 @@ private:
   unsigned short Kind_Interpolation; /*!\brief type of interpolation to use for FSI applications. */
   bool Prestretch;            /*!< Read a reference geometry for optimization purposes. */
   string Prestretch_FEMFileName;         /*!< \brief File name for reference geometry. */
+  string Table_Name;   			/*!< \brief File name for Table for LUT model.  */
+  string Table_Fluid;   		/*!< \brief Fluid name for Table for LUT model.  */
+  unsigned short  Table_InterpolationScheme;   /*!< \brief Interpolation scheme for LUT model.  */
+  unsigned short  Table_Distribution;   	/*!< \brief Distribution of density column for LUT model.  */
+  unsigned short Table_IMax;	/*!< \brief Number of elements in density column for LUT model.  */
+  unsigned short Table_JMax;	/*!< \brief Number of elements in temperature column for LUT model.  */
+  su2double Table_TMin;			/*!< \brief Minimum temperature value in table for LUT model.  */
+  su2double Table_TMax;			/*!< \brief Maximum temperature value in table for LUT model.  */
+  su2double Table_RhoMin;		/*!< \brief Minimum density value in table for LUT model.  */
+  su2double Table_RhoMax;		/*!< \brief Maximum density value in table for LUT model.  */
+
+
   unsigned long Nonphys_Points, /*!< \brief Current number of non-physical points in the solution. */
   Nonphys_Reconstr;           /*!< \brief Current number of non-physical reconstructions for 2nd-order upwinding. */
   bool ParMETIS;              /*!< \brief Boolean for activating ParMETIS mode (while testing). */
@@ -3066,6 +3078,32 @@ public:
    */
   su2double GetAcentric_Factor(void);
   
+  /*!
+    * \brief Get the value of the critical pressure.
+    * \return Critical pressure.
+    */
+  string GetTable_Name(void);
+
+
+  string GetTable_Fluid(void);
+
+  unsigned short GetTable_InterpolationScheme(void);
+
+  unsigned short GetTable_Distribution(void);
+
+  unsigned short GetTable_IMax(void);
+
+  unsigned short GetTable_JMax(void);
+
+  su2double GetTable_TMin(void);
+
+  su2double GetTable_TMax(void);
+
+  su2double GetTable_RhoMin(void);
+
+  su2double GetTable_RhoMax(void);
+
+
   /*!
    * \brief Get the value of the viscosity model.
    * \return Viscosity model.

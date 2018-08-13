@@ -45,38 +45,21 @@
 #include "stdio.h"
 #include "math.h"
 
+#include "../../Common/include/config_structure.hpp"
+
 using namespace std;
 
 
 class CLookUpTable {
 protected:
-su2double
-	   StaticEnergy,    /*!< \brief Internal Energy. */
-	   SpecificVolume,  /*!< \brief Internal Energy. */
-       Entropy,         /*!< \brief Entropy. */
-       Density,         /*!< \brief Density. */
-       Pressure,        /*!< \brief Pressure. */
-       SoundSpeed2,     /*!< \brief SpeedSound. */
-       Temperature,     /*!< \brief Temperature. */
-       Enthalpy, 		/*!< \brief Enthalpy. */
-       dPdrho_e,        /*!< \brief DpDd_e. */
-       dPde_rho,        /*!< \brief DpDe_d. */
-       dTdrho_e,        /*!< \brief DTDd_e. */
-       dTde_rho,        /*!< \brief DTDe_d. */
-       dhdrho_P,	 	/*!< \brief DhDrho_p. */
-       dhdP_rho,		/*!< \brief DhDp_rho. */
-       dsdrho_P,		/*!< \brief DsDrho_p. */
-       dsdP_rho,		/*!< \brief DsDp_rho. */
-       Cp,              /*!< \brief Specific Heat Capacity at constant pressure. */
-       Mu,          	/*!< \brief Specific Heat Capacity at constant pressure. */
-       dmudrho_T,       /*!< \brief Specific Heat Capacity at constant pressure. */
-       dmudT_rho,       /*!< \brief Specific Heat Capacity at constant pressure. */
-       Kt,          	/*!< \brief Specific Heat Capacity at constant pressure. */
-       dktdrho_T,       /*!< \brief Specific Heat Capacity at constant pressure. */
-       dktdT_rho;       /*!< \brief Specific Heat Capacity at constant pressure. */
 
 int imax, jmax;
-string tab_dist;
+string table_filename;
+string table_fluid;
+string table_distribution;
+string table_interpolation_scheme;
+su2double rhomin, rhomax;
+su2double Tmin, Tmax;
 
 struct FluidState {
         double P;
@@ -101,13 +84,21 @@ struct FluidState {
         double dlam_drho;
         double deta_dT;
         double deta_drho;
+        double dPdrho_e;
+        double dPde_rho;
+        double dTdrho_e;
+        double dTde_rho;
+        double dhdrho_P;
+        double dhdP_rho;
+        double dsdrho_P;
+        double dsdP_rho;
 };
 
 
-
-
+void InitializeTableStateRhoTWithCP(void);
 void ReadTableRhoT(string table_name);
 int ReadTableBIN(const char *fileName);
+void SaveTableBIN(const char *fileName);
 
 
 su2double InterpolateTransferTable(string columns, su2double column1_value,su2double column2_value);
@@ -127,7 +118,13 @@ public:
 		/*!
 		 * \brief Constructor of the class.
 		 */
-		CLookUpTable(string table_name, string tab_dist, int column1_size, int column2_size);
+		CLookUpTable(string table_name,string fluid, string tab_dist, int table_imax, int table_jmax, string interpolation_scheme );
+
+
+		/*!
+		 * \brief Constructor of the class.
+		 */
+		CLookUpTable(CConfig *config);
 
 
 		/*!
