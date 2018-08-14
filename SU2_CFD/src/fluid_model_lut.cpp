@@ -43,14 +43,36 @@ CLUTFluidModel::CLUTFluidModel() : CFluidModel() {
 }
 
 
-//CLUTFluidModel::CLUTFluidModel(string table_name,string fluid, string tab_dist, int table_imax, int table_jmax, string interpolation_scheme) : CFluidModel() {
-//  Gamma = 0;
-//  Gamma_Minus_One = Gamma - 1.0;
-//  Gas_Constant = 0.0;
-//  Cp = Gamma/Gamma_Minus_One*Gas_Constant;
-//  LookUpTable = new CLookUpTable(table_name, fluid, tab_dist, table_imax, table_jmax, interpolation_scheme);
-//
-//}
+CLUTFluidModel::CLUTFluidModel(string table_name,
+							   string fluid,
+							   string tab_dist,
+							   int table_imax,
+							   int table_jmax,
+							   double rho_min,
+							   double rho_max,
+							   double T_min,
+							   double T_max,
+							   string interpolation_scheme,
+							   bool createTable) : CFluidModel() {
+  Gamma = 0;
+  Gamma_Minus_One = Gamma - 1.0;
+  Gas_Constant = 0.0;
+  Cp = Gamma/Gamma_Minus_One*Gas_Constant;
+  LookUpTable = new CLookUpTable(
+		  table_name,
+		  fluid,
+		  tab_dist,
+		  table_imax,
+		  table_jmax,
+		  rho_min,
+		  rho_max,
+		  T_min,
+		  T_max,
+		  interpolation_scheme,
+		  createTable);
+}
+
+
 CLUTFluidModel::CLUTFluidModel(CConfig *config) : CFluidModel() {
   Gamma = 0;
   Gamma_Minus_One = Gamma - 1.0;
@@ -66,58 +88,76 @@ CLUTFluidModel::~CLUTFluidModel(void) {
 }
 
 void CLUTFluidModel::SetTDState_rhoe (su2double rho, su2double e ) {
-  Density = rho;
-  StaticEnergy = e;
-  Pressure = Gamma_Minus_One*Density*StaticEnergy;
-  Temperature = Gamma_Minus_One*StaticEnergy/Gas_Constant;
-  SoundSpeed2 = Gamma*Pressure/Density;
-  Entropy = (1.0/Gamma_Minus_One*log(Temperature) + log(1.0/Density))*Gas_Constant;
-  dPdrho_e = Gamma_Minus_One*StaticEnergy;
-  dPde_rho = Gamma_Minus_One*Density;
-  dTdrho_e = 0.0;
-  dTde_rho = Gamma_Minus_One/Gas_Constant;
+	LookUpTable->SetTDState_rhoe(rho,e);
+	CopyStateLUT();
 }
 
 void CLUTFluidModel::SetTDState_PT (su2double P, su2double T ) {
-
-
+	LookUpTable->SetTDState_PT(P,T);
+	CopyStateLUT();
 }
 
 void CLUTFluidModel::SetTDState_Prho (su2double P, su2double rho ) {
-
-
+	LookUpTable->SetTDState_Prho(P,rho);
+	CopyStateLUT();
 }
 
 void CLUTFluidModel::SetEnergy_Prho (su2double P, su2double rho ) {
-
+	LookUpTable->SetEnergy_Prho(P,rho);
+	StaticEnergy = LookUpTable->GetStaticEnergy();
 }
 
 void CLUTFluidModel::SetTDState_hs (su2double h, su2double s ) {
-
-
-
+	LookUpTable->SetTDState_hs(h,s);
+	CopyStateLUT();
 }
 
 void CLUTFluidModel::SetTDState_Ps (su2double P, su2double s ) {
-
-
-
+	LookUpTable->SetTDState_Ps(P,s);
+	CopyStateLUT();
 }
 
 void CLUTFluidModel::SetTDState_rhoT (su2double rho, su2double T ) {
-
-
-
+	LookUpTable->SetTDState_rhoT(rho,T);
+	CopyStateLUT();
 }
 
 void CLUTFluidModel::ComputeDerivativeNRBC_Prho(su2double P, su2double rho ){
-
-
-
+	LookUpTable->SetTDState_Prho(P, rho);
+	CopyStateLUT();
 }
 
 
+void CLUTFluidModel::CopyStateLUT(){
+	StaticEnergy = LookUpTable->GetStaticEnergy();
+    Entropy = LookUpTable->GetEntropy();
+    Density = LookUpTable->GetDensity();
+    Pressure = LookUpTable->GetPressure();
+    SoundSpeed2 = LookUpTable->GetSoundSpeed2();
+    Temperature = LookUpTable->GetTemperature();
+    dPdrho_e = LookUpTable->GetdPdrho_e();
+    dPde_rho = LookUpTable->GetdPde_rho();
+    dTdrho_e = LookUpTable->GetdTdrho_e();
+    dTde_rho = LookUpTable->GetdTde_rho();
+    dhdrho_P = LookUpTable->Getdhdrho_P();
+    dhdP_rho = LookUpTable->GetdhdP_rho();
+    dsdrho_P = LookUpTable->Getdsdrho_P();
+    dsdP_rho = LookUpTable->GetdsdP_rho();
+    Cp = LookUpTable->GetCp();
+    Mu = LookUpTable->GetLaminarViscosity();
+    dmudrho_T = LookUpTable->Getdmudrho_T();
+    dmudT_rho = LookUpTable->GetdmudT_rho();
+    Kt = LookUpTable->GetThermalConductivity();
+    dktdrho_T = LookUpTable->Getdktdrho_T();
+    dktdT_rho = LookUpTable->GetdktdT_rho();
 
+
+//	dhdrho_P= LookUpTable->
+//	dhdP_rho= 1.0/dPde_rho +1.0/rho;
+//	dPds_rho= rho*rho*(SoundSpeed2 - dPdrho_T)/dPdT_rho;
+//	dsdP_rho= 1.0/dPds_rho;
+//	dsdrho_P= -SoundSpeed2/dPds_rho;
+}
 
 
 

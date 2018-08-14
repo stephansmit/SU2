@@ -87,6 +87,8 @@ su2double
 CViscosityModel *LaminarViscosity;      /*!< \brief Laminar Viscosity Model */
 CConductivityModel *ThermalConductivity;/*!< \brief Thermal Conductivity Model */
 CLookUpTable *LookUpTable; 				/*!< \brief Look Up Table */
+
+
 public:
 
 	/*!
@@ -187,7 +189,11 @@ public:
 		su2double Getdsdrho_P ();
 
 		/*!
-		 * \brief Get fluid temperature partial derivative.
+		 * \brief Get fluid temperatu//	dhdrho_P= LookUpTable->
+//	dhdP_rho= 1.0/dPde_rho +1.0/rho;
+//	dPds_rho= rho*rho*(SoundSpeed2 - dPdrho_T)/dPdT_rho;
+//	dsdP_rho= 1.0/dPds_rho;
+//	dsdrho_P= -SoundSpeed2/dPds_rho;re partial derivative.
 		 */
 		su2double GetdsdP_rho ();
 
@@ -211,7 +217,8 @@ public:
 		 */
 		su2double GetdktdT_rho ();
 
-		/*!
+		/*!		void CopyStateLUT();
+		 *
 		 * \brief Set viscosity model.
 		 */
 		void SetLaminarViscosityModel (CConfig *config);
@@ -274,6 +281,7 @@ public:
 		 * \param[in] InputSpec - Input pair for FLP calls ("rhoT").
 		 * \param[in] th1 - first thermodynamic variable (rho).
 		 * \param[in] th2 - second thermodynamic variable (T).
+		 *		void CopyStateLUT();
 		 *
 		 */
 		virtual void SetTDState_rhoT (su2double rho, su2double T );
@@ -303,7 +311,7 @@ public:
 
 		void SetThermalConductivityModelDirect(CConductivityModel *ConductivityModel );
 
-
+		void SetTransportModelsLUTDirect();
 };
 
 
@@ -421,6 +429,7 @@ protected:
           Gamma_Minus_One,       /*!< \brief Heat Capacity Ratio Minus One. */
           Gas_Constant;        /*!< \brief Gas Constant. */
 
+	void CopyStateLUT();
 
 public:
 
@@ -432,7 +441,17 @@ public:
 		/*!
 		 * \brief Constructor of the class.
 		 */
-  	   CLUTFluidModel(string table_name,string fluid, string tab_dist, int table_imax, int table_jmax, string interpolation_scheme);
+  	   CLUTFluidModel(string table_name,
+  	   							   string fluid,
+  	   							   string tab_dist,
+  	   							   int table_imax,
+  	   							   int table_jmax,
+  	   							   double rho_min,
+  	   							   double rho_max,
+  	   							   double T_min,
+  	   							   double T_max,
+  	   							   string interpolation_scheme,
+  	   							   bool createTable);
 
 		/*!
 		 * \brief Constructor of the class.
@@ -564,6 +583,7 @@ public:
      * \param[in] rho - second thermodynamic variable.
      */
     void SetTDState_Prho (su2double P, su2double rho );
+	void CopyStateLUT();
 
     /*!
      * \brief Set the Dimensionless Internal Energy using Pressure and Density

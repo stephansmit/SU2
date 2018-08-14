@@ -105,4 +105,8 @@ void CFluidModel::SetLaminarViscosityModelDirect(CViscosityModel *ViscosityModel
 	LaminarViscosity = ViscosityModel;
 }
 
+void CFluidModel::SetTransportModelsLUTDirect() {
+	LaminarViscosity = new CViscosityLUT(LookUpTable);
+	ThermalConductivity= new CConductivityLUT(LookUpTable);
 
+}
