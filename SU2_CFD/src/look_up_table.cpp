@@ -101,7 +101,8 @@ CLookUpTable::CLookUpTable(string table_name,
 						   double rho_max,
 						   double T_min,
 						   double T_max,
-						   string interpolation_scheme
+						   string interpolation_scheme,
+						   bool createTable
 						   ){
 	int rank = MASTER_NODE;
 	#ifdef HAVE_MPI
@@ -125,7 +126,13 @@ CLookUpTable::CLookUpTable(string table_name,
     	TableState[i] = new FluidState[jmax];
 
     if (rank == MASTER_NODE){
-    	CreateTableRhoT();
+    	if (createTable) {
+    		CreateTableRhoT();
+    	}
+    	else{
+    		ReadTableRhoT(table_filename);
+    	}
+
     }
     else {
     	ReadTableRhoT(table_filename);
@@ -139,26 +146,33 @@ CLookUpTable::~CLookUpTable(void) {
 
 }
 
-void CLookUpTable::SetTDState_rhoe (su2double rho, su2double e) {}
+void CLookUpTable::SetTDState_rhoe (su2double rho, su2double e) {
+	if (not CheckIfInterpolated_rhoe(rho,e)) InterpolateProperties("DU",(double) rho, (double) e, OutputState, "ALL" );
+}
 
+void CLookUpTable::SetTDState_PT (su2double P, su2double T ){
+	if (not CheckIfInterpolated_PT(P,T)) InterpolateProperties("PT",(double) P, T, OutputState, "ALL" );
+}
 
-void CLookUpTable::SetTDState_PT (su2double P, su2double T ){};
+void CLookUpTable::SetTDState_Prho (su2double P, su2double rho ){
+	if (not CheckIfInterpolated_Prho(P,rho)) InterpolateProperties("PD",(double) P, rho, OutputState, "ALL" );
+};
 
+void CLookUpTable::SetEnergy_Prho (su2double P, su2double rho ){
+	if (not CheckIfInterpolated_Prho(P,rho)) InterpolateProperties("PD",(double) P, rho, OutputState, "ENERGY" );
+};
 
-void CLookUpTable::SetTDState_Prho (su2double P, su2double rho ){};
-
-
-void CLookUpTable::SetEnergy_Prho (su2double P, su2double rho ){};
-
-
-void CLookUpTable::SetTDState_hs (su2double h, su2double s ){};
-
+void CLookUpTable::SetTDState_hs (su2double h, su2double s ){
+	if (not CheckIfInterpolated_hs(h,s)) InterpolateProperties("hs",(double) h, (double) s, OutputState, "ALL" );
+}
 
 void CLookUpTable::SetTDState_rhoT (su2double rho, su2double T ){
 	if (not CheckIfInterpolated_rhoT(rho,T)) InterpolateProperties("Tv",(double) T, 1.0/rho, OutputState, "ALL" );
 };
 
-void CLookUpTable::SetTDState_Ps (su2double P, su2double s ){};
+void CLookUpTable::SetTDState_Ps (su2double P, su2double s ){
+	if (not CheckIfInterpolated_Ps(P,s)) InterpolateProperties("PS",(double) P, s, OutputState, "ALL" );
+};
 
 //void CLookUpTable::ComputeDerivativeNRBC_Prho (su2double P, su2double rho );
 
@@ -201,15 +215,11 @@ void CLookUpTable::CreateTableRhoT(void){
         if (TableState[i][j].lambda<0.0) TableState[i][j].lambda=0.0;
       }
     }
-	SaveTableTEC(table_filename.c_str());
-//	SaveTableBIN(table_filename.c_str());
+//	SaveTableTEC(table_filename.c_str());
+	SaveTableBIN(table_filename.c_str());
 
 }
 
-//void CLookUpTable::CreateTransferTable(string InputSpec, string OutputSpec){
-//
-//
-//}
 
 int CLookUpTable::ReadTableBIN(const char *fileName)
 {
@@ -346,9 +356,148 @@ void CLookUpTable::InterpolateProperties( const char* InputSpec,
     }
     else if (InputSpec=="PT")
     {
-      cout << "not yet PT" << endl;
-      throw(-111);
+	// Inverse evaluation for h and s starting from an initial guess of rho and T.
+		  // We use a Newton solver and the gradients are approximated at second order.
+		  double dens = (*OutputState).d;
+		  double temp = Input2;
+		  double h_tg = Input1;
+		  double s_tg = Input2;
+
+		  double err=1.0, toll=1.0e-10;
+		  int    it=0, nmax=100;
+
+		  iTab = -1;
+
+		  while (it<nmax && err>toll)
+		  {
+			it++;
+
+			// find the cell
+			double ff;
+			if (strcmp(table_distribution.c_str(), "LOG")==0) ff = (log10(dens)-log10(TableState[0][0].d))/(log10(TableState[0][jmax-1].d)-log10(TableState[0][0].d));
+			else                                    ff = (dens-TableState[0][0].d)/(TableState[0][jmax-1].d-TableState[0][0].d);
+			jTab = ceil(ff*(double)(jmax-1));
+			fact1 = (dens-TableState[0][jTab-1].d)/(TableState[0][jTab].d-TableState[0][jTab-1].d);
+
+			iTab=0;
+			while((temp>(TableState[iTab][jTab-1].T+fact1*(TableState[iTab][jTab].T-TableState[iTab][jTab-1].T))) && (iTab<imax-1))   iTab++;
+
+			// calculate fact2
+			v1 = TableState[iTab-1][jTab-1].T+fact1*(TableState[iTab-1][jTab].T-TableState[iTab-1][jTab-1].T);
+			v2 = TableState[iTab  ][jTab-1].T+fact1*(TableState[iTab  ][jTab].T-TableState[iTab  ][jTab-1].T);
+			fact2 = (temp-v1)/(v2-v1);
+
+			double drho = TableState[0][jTab].d - TableState[0][jTab-1].d;
+			double dT   = v2-v1;
+
+			// calculate h* and s*
+			bilinInterpolState(*OutputState, iTab, jTab, fact1, fact2, "PT");
+			iTab = (*OutputState).i;
+
+			// dhdT, dsdT
+			double h1 = TableState[iTab-1][jTab-1].P+fact1*(TableState[iTab-1][jTab].P-TableState[iTab-1][jTab-1].P);
+			double h2 = TableState[iTab  ][jTab-1].P+fact1*(TableState[iTab  ][jTab].P-TableState[iTab  ][jTab-1].P);
+			double dhdT = (h2-h1)/dT;
+			double s1 = TableState[iTab-1][jTab-1].T+fact1*(TableState[iTab-1][jTab].T-TableState[iTab-1][jTab-1].T);
+			double s2 = TableState[iTab  ][jTab-1].T+fact1*(TableState[iTab  ][jTab].T-TableState[iTab  ][jTab-1].T);
+			double dsdT = (s2-s1)/dT;
+
+
+			// dhdrho, dsdrho
+			double f1 = (temp-TableState[iTab-1][jTab-1].T)/(TableState[iTab][jTab-1].T-TableState[iTab-1][jTab-1].T);
+			double f2 = (temp-TableState[iTab-1][jTab].T)/(TableState[iTab][jTab].T-TableState[iTab-1][jTab].T);
+			h1 = TableState[iTab-1][jTab-1].P+f1*(TableState[iTab][jTab-1].P-TableState[iTab-1][jTab-1].P);
+			h2 = TableState[iTab-1][jTab  ].P+f2*(TableState[iTab][jTab  ].P-TableState[iTab-1][jTab  ].P);
+			double dhdrho = (h2-h1)/drho;
+			s1 = TableState[iTab-1][jTab-1].T+f1*(TableState[iTab][jTab-1].T-TableState[iTab-1][jTab-1].T);
+			s2 = TableState[iTab-1][jTab  ].T+f2*(TableState[iTab][jTab  ].T-TableState[iTab-1][jTab  ].T);
+			double dsdrho = (s2-s1)/drho;
+
+			double det = dsdrho*dhdT - dsdT*dhdrho;
+
+			double ddens = (dhdT*((*OutputState).T - s_tg) - dsdT*((*OutputState).P - h_tg))/det;
+			double dtemp = (-dhdrho*((*OutputState).T - s_tg) + dsdrho*((*OutputState).P - h_tg))/det;
+
+			err = fabs(ddens)/dens + fabs(dtemp)/temp;
+
+			if (fabs(ddens)<dens) dens -= 0.75*ddens;
+			if (fabs(dtemp)<temp) temp -= 0.75*dtemp;
+		  }
+		  if (err>toll || it>nmax) cout << "PT not converged!" << endl;
+
     }
+    else if (InputSpec=="DU")
+	{
+	// Inverse evaluation for h and s starting from an initial guess of rho and T.
+		  // We use a Newton solver and the gradients are approximated at second order.
+		  double dens = Input1;
+		  double temp = (*OutputState).u;
+		  double h_tg = Input1;
+		  double s_tg = Input2;
+
+		  double err=1.0, toll=1.0e-10;
+		  int    it=0, nmax=100;
+
+		  iTab = -1;
+
+		  while (it<nmax && err>toll)
+		  {
+			it++;
+
+			// find the cell
+			double ff;
+			if (strcmp(table_distribution.c_str(), "LOG")==0) ff = (log10(dens)-log10(TableState[0][0].d))/(log10(TableState[0][jmax-1].d)-log10(TableState[0][0].d));
+			else                                    ff = (dens-TableState[0][0].d)/(TableState[0][jmax-1].d-TableState[0][0].d);
+			jTab = ceil(ff*(double)(jmax-1));
+			fact1 = (dens-TableState[0][jTab-1].d)/(TableState[0][jTab].d-TableState[0][jTab-1].d);
+
+			iTab=0;
+			while((temp>(TableState[iTab][jTab-1].T+fact1*(TableState[iTab][jTab].T-TableState[iTab][jTab-1].T))) && (iTab<imax-1))   iTab++;
+
+			// calculate fact2
+			v1 = TableState[iTab-1][jTab-1].T+fact1*(TableState[iTab-1][jTab].T-TableState[iTab-1][jTab-1].T);
+			v2 = TableState[iTab  ][jTab-1].T+fact1*(TableState[iTab  ][jTab].T-TableState[iTab  ][jTab-1].T);
+			fact2 = (temp-v1)/(v2-v1);
+
+			double drho = TableState[0][jTab].d - TableState[0][jTab-1].d;
+			double dT   = v2-v1;
+
+			// calculate h* and s*
+			bilinInterpolState(*OutputState, iTab, jTab, fact1, fact2, "DU");
+			iTab = (*OutputState).i;
+
+			// dhdT, dsdT
+			double h1 = TableState[iTab-1][jTab-1].d+fact1*(TableState[iTab-1][jTab].d-TableState[iTab-1][jTab-1].d);
+			double h2 = TableState[iTab  ][jTab-1].d+fact1*(TableState[iTab  ][jTab].d-TableState[iTab  ][jTab-1].d);
+			double dhdT = (h2-h1)/dT;
+			double s1 = TableState[iTab-1][jTab-1].u+fact1*(TableState[iTab-1][jTab].u-TableState[iTab-1][jTab-1].u);
+			double s2 = TableState[iTab  ][jTab-1].u+fact1*(TableState[iTab  ][jTab].u-TableState[iTab  ][jTab-1].u);
+			double dsdT = (s2-s1)/dT;
+
+
+			// dhdrho, dsdrho
+			double f1 = (temp-TableState[iTab-1][jTab-1].T)/(TableState[iTab][jTab-1].T-TableState[iTab-1][jTab-1].T);
+			double f2 = (temp-TableState[iTab-1][jTab].T)/(TableState[iTab][jTab].T-TableState[iTab-1][jTab].T);
+			h1 = TableState[iTab-1][jTab-1].d+f1*(TableState[iTab][jTab-1].d-TableState[iTab-1][jTab-1].d);
+			h2 = TableState[iTab-1][jTab  ].d+f2*(TableState[iTab][jTab  ].d-TableState[iTab-1][jTab  ].d);
+			double dhdrho = (h2-h1)/drho;
+			s1 = TableState[iTab-1][jTab-1].u+f1*(TableState[iTab][jTab-1].u-TableState[iTab-1][jTab-1].u);
+			s2 = TableState[iTab-1][jTab  ].u+f2*(TableState[iTab][jTab  ].u-TableState[iTab-1][jTab  ].u);
+			double dsdrho = (s2-s1)/drho;
+
+			double det = dsdrho*dhdT - dsdT*dhdrho;
+
+			double ddens = (dhdT*((*OutputState).u - s_tg) - dsdT*((*OutputState).d - h_tg))/det;
+			double dtemp = (-dhdrho*((*OutputState).u - s_tg) + dsdrho*((*OutputState).d - h_tg))/det;
+
+			err = fabs(ddens)/dens + fabs(dtemp)/temp;
+
+			if (fabs(ddens)<dens) dens -= 0.75*ddens;
+			if (fabs(dtemp)<temp) temp -= 0.75*dtemp;
+		  }
+		  if (err>toll || it>nmax) cout << "DU not converged!" << endl;
+
+	}
     else if (InputSpec=="hs")
     {
       // Inverse evaluation for h and s starting from an initial guess of rho and T.
@@ -420,6 +569,148 @@ void CLookUpTable::InterpolateProperties( const char* InputSpec,
       }
       if (err>toll || it>nmax) cout << "HS not converged!" << endl;
     }
+    else if (InputSpec=="PD")
+    {
+         // Inverse evaluation for h and s starting from an initial guess of rho and T.
+         // We use a Newton solver and the gradients are approximated at second order.
+         double dens = Input2;
+         double temp = (*OutputState).T;
+         double h_tg = Input1;
+         double s_tg = Input2;
+
+         double err=1.0, toll=1.0e-10;
+         int    it=0, nmax=100;
+
+         iTab = -1;
+
+         while (it<nmax && err>toll)
+         {
+           it++;
+
+           // find the cell
+           double ff;
+           if (strcmp(table_distribution.c_str(), "LOG")==0) ff = (log10(dens)-log10(TableState[0][0].d))/(log10(TableState[0][jmax-1].d)-log10(TableState[0][0].d));
+           else                                    ff = (dens-TableState[0][0].d)/(TableState[0][jmax-1].d-TableState[0][0].d);
+           jTab = ceil(ff*(double)(jmax-1));
+           fact1 = (dens-TableState[0][jTab-1].d)/(TableState[0][jTab].d-TableState[0][jTab-1].d);
+
+           iTab=0;
+           while((temp>(TableState[iTab][jTab-1].T+fact1*(TableState[iTab][jTab].T-TableState[iTab][jTab-1].T))) && (iTab<imax-1))   iTab++;
+
+           // calculate fact2
+           v1 = TableState[iTab-1][jTab-1].T+fact1*(TableState[iTab-1][jTab].T-TableState[iTab-1][jTab-1].T);
+           v2 = TableState[iTab  ][jTab-1].T+fact1*(TableState[iTab  ][jTab].T-TableState[iTab  ][jTab-1].T);
+           fact2 = (temp-v1)/(v2-v1);
+
+           double drho = TableState[0][jTab].d - TableState[0][jTab-1].d;
+           double dT   = v2-v1;
+
+           // calculate h* and s*
+           bilinInterpolState(*OutputState, iTab, jTab, fact1, fact2, "PD");
+           iTab = (*OutputState).i;
+
+           // dhdT, dsdT
+           double h1 = TableState[iTab-1][jTab-1].P+fact1*(TableState[iTab-1][jTab].P-TableState[iTab-1][jTab-1].P);
+           double h2 = TableState[iTab  ][jTab-1].P+fact1*(TableState[iTab  ][jTab].P-TableState[iTab  ][jTab-1].P);
+           double dhdT = (h2-h1)/dT;
+           double s1 = TableState[iTab-1][jTab-1].d+fact1*(TableState[iTab-1][jTab].d-TableState[iTab-1][jTab-1].d);
+           double s2 = TableState[iTab  ][jTab-1].d+fact1*(TableState[iTab  ][jTab].d-TableState[iTab  ][jTab-1].d);
+           double dsdT = (s2-s1)/dT;
+
+
+           // dhdrho, dsdrho
+           double f1 = (temp-TableState[iTab-1][jTab-1].T)/(TableState[iTab][jTab-1].T-TableState[iTab-1][jTab-1].T);
+           double f2 = (temp-TableState[iTab-1][jTab].T)/(TableState[iTab][jTab].T-TableState[iTab-1][jTab].T);
+           h1 = TableState[iTab-1][jTab-1].P+f1*(TableState[iTab][jTab-1].P-TableState[iTab-1][jTab-1].P);
+           h2 = TableState[iTab-1][jTab  ].P+f2*(TableState[iTab][jTab  ].P-TableState[iTab-1][jTab  ].P);
+           double dhdrho = (h2-h1)/drho;
+           s1 = TableState[iTab-1][jTab-1].d+f1*(TableState[iTab][jTab-1].d-TableState[iTab-1][jTab-1].d);
+           s2 = TableState[iTab-1][jTab  ].d+f2*(TableState[iTab][jTab  ].d-TableState[iTab-1][jTab  ].d);
+           double dsdrho = (s2-s1)/drho;
+
+           double det = dsdrho*dhdT - dsdT*dhdrho;
+
+           double ddens = (dhdT*((*OutputState).d - s_tg) - dsdT*((*OutputState).P - h_tg))/det;
+           double dtemp = (-dhdrho*((*OutputState).d - s_tg) + dsdrho*((*OutputState).P - h_tg))/det;
+
+           err = fabs(ddens)/dens + fabs(dtemp)/temp;
+
+           if (fabs(ddens)<dens) dens -= 0.75*ddens;
+           if (fabs(dtemp)<temp) temp -= 0.75*dtemp;
+         }
+         if (err>toll || it>nmax) cout << "PD not converged!" << endl;
+    }
+    else if (InputSpec=="PS")
+    {
+          // Inverse evaluation for h and s starting from an initial guess of rho and T.
+          // We use a Newton solver and the gradients are approximated at second order.
+          double dens = (*OutputState).d;
+          double temp = (*OutputState).T;
+          double h_tg = Input1;
+          double s_tg = Input2;
+
+          double err=1.0, toll=1.0e-10;
+          int    it=0, nmax=100;
+
+          iTab = -1;
+
+          while (it<nmax && err>toll)
+          {
+            it++;
+
+            // find the cell
+            double ff;
+            if (strcmp(table_distribution.c_str(), "LOG")==0) ff = (log10(dens)-log10(TableState[0][0].d))/(log10(TableState[0][jmax-1].d)-log10(TableState[0][0].d));
+            else                                    ff = (dens-TableState[0][0].d)/(TableState[0][jmax-1].d-TableState[0][0].d);
+            jTab = ceil(ff*(double)(jmax-1));
+            fact1 = (dens-TableState[0][jTab-1].d)/(TableState[0][jTab].d-TableState[0][jTab-1].d);
+
+            iTab=0;
+            while((temp>(TableState[iTab][jTab-1].T+fact1*(TableState[iTab][jTab].T-TableState[iTab][jTab-1].T))) && (iTab<imax-1))   iTab++;
+
+            // calculate fact2
+            v1 = TableState[iTab-1][jTab-1].T+fact1*(TableState[iTab-1][jTab].T-TableState[iTab-1][jTab-1].T);
+            v2 = TableState[iTab  ][jTab-1].T+fact1*(TableState[iTab  ][jTab].T-TableState[iTab  ][jTab-1].T);
+            fact2 = (temp-v1)/(v2-v1);
+
+            double drho = TableState[0][jTab].d - TableState[0][jTab-1].d;
+            double dT   = v2-v1;
+
+            // calculate h* and s*
+            bilinInterpolState(*OutputState, iTab, jTab, fact1, fact2, "PS");
+            iTab = (*OutputState).i;
+
+            // dhdT, dsdT
+            double h1 = TableState[iTab-1][jTab-1].P+fact1*(TableState[iTab-1][jTab].P-TableState[iTab-1][jTab-1].P);
+            double h2 = TableState[iTab  ][jTab-1].P+fact1*(TableState[iTab  ][jTab].P-TableState[iTab  ][jTab-1].P);
+            double dhdT = (h2-h1)/dT;
+            double s1 = TableState[iTab-1][jTab-1].s+fact1*(TableState[iTab-1][jTab].s-TableState[iTab-1][jTab-1].s);
+            double s2 = TableState[iTab  ][jTab-1].s+fact1*(TableState[iTab  ][jTab].s-TableState[iTab  ][jTab-1].s);
+            double dsdT = (s2-s1)/dT;
+
+
+            // dhdrho, dsdrho
+            double f1 = (temp-TableState[iTab-1][jTab-1].T)/(TableState[iTab][jTab-1].T-TableState[iTab-1][jTab-1].T);
+            double f2 = (temp-TableState[iTab-1][jTab].T)/(TableState[iTab][jTab].T-TableState[iTab-1][jTab].T);
+            h1 = TableState[iTab-1][jTab-1].P+f1*(TableState[iTab][jTab-1].P-TableState[iTab-1][jTab-1].P);
+            h2 = TableState[iTab-1][jTab  ].P+f2*(TableState[iTab][jTab  ].P-TableState[iTab-1][jTab  ].P);
+            double dhdrho = (h2-h1)/drho;
+            s1 = TableState[iTab-1][jTab-1].s+f1*(TableState[iTab][jTab-1].s-TableState[iTab-1][jTab-1].s);
+            s2 = TableState[iTab-1][jTab  ].s+f2*(TableState[iTab][jTab  ].s-TableState[iTab-1][jTab  ].s);
+            double dsdrho = (s2-s1)/drho;
+
+            double det = dsdrho*dhdT - dsdT*dhdrho;
+
+            double ddens = (dhdT*((*OutputState).s - s_tg) - dsdT*((*OutputState).P - h_tg))/det;
+            double dtemp = (-dhdrho*((*OutputState).s - s_tg) + dsdrho*((*OutputState).P - h_tg))/det;
+
+            err = fabs(ddens)/dens + fabs(dtemp)/temp;
+
+            if (fabs(ddens)<dens) dens -= 0.75*ddens;
+            if (fabs(dtemp)<temp) temp -= 0.75*dtemp;
+          }
+          if (err>toll || it>nmax) cout << "PS not converged!" << endl;
+    }
 
     bilinInterpolState(*OutputState, iTab, jTab, fact1, fact2, props);
 
@@ -462,24 +753,34 @@ void CLookUpTable::bilinInterpolState(FluidState &resState,
         resState.i      = (double)i;
         resState.j      = (double)j;
       }
-      else if (props=="ENERGY")
+      else if (props=="PT")
       {
-        resState.u      = bilinInterpol(TableState[i-1][j-1].u, TableState[i-1][j].u, TableState[i][j-1].u, TableState[i][j].u, fact1, fact2);
-        resState.i      = (double)i;
-        resState.j      = (double)j;
-      }
-      else if (props=="ENTROPY")
+		resState.P      = bilinInterpol(TableState[i-1][j-1].P, TableState[i-1][j].P, TableState[i][j-1].P, TableState[i][j].P, fact1, fact2);
+		resState.T      = bilinInterpol(TableState[i-1][j-1].T, TableState[i-1][j].T, TableState[i][j-1].T, TableState[i][j].T, fact1, fact2);
+		resState.i      = (double)i;
+		resState.j      = (double)j;
+	  }
+      else if (props=="PD")
       {
-        resState.s      = bilinInterpol(TableState[i-1][j-1].s, TableState[i-1][j].s, TableState[i][j-1].s, TableState[i][j].s, fact1, fact2);
-        resState.i      = (double)i;
-        resState.j      = (double)j;
-      }
-      else if (props=="THERMCOND")
+		resState.P      = bilinInterpol(TableState[i-1][j-1].P, TableState[i-1][j].P, TableState[i][j-1].P, TableState[i][j].P, fact1, fact2);
+		resState.d      = bilinInterpol(TableState[i-1][j-1].d, TableState[i-1][j].d, TableState[i][j-1].d, TableState[i][j].d, fact1, fact2);
+		resState.i      = (double)i;
+		resState.j      = (double)j;
+	  }
+      else if (props=="PS")
       {
-        resState.lambda = bilinInterpol(TableState[i-1][j-1].lambda, TableState[i-1][j].lambda, TableState[i][j-1].lambda, TableState[i][j].lambda, fact1, fact2);
-        resState.i      = (double)i;
-        resState.j      = (double)j;
-      }
+		resState.P      = bilinInterpol(TableState[i-1][j-1].P, TableState[i-1][j].P, TableState[i][j-1].P, TableState[i][j].P, fact1, fact2);
+		resState.s      = bilinInterpol(TableState[i-1][j-1].s, TableState[i-1][j].s, TableState[i][j-1].s, TableState[i][j].s, fact1, fact2);
+		resState.i      = (double)i;
+		resState.j      = (double)j;
+	  }
+      else if (props=="DU")
+      {
+		resState.d      = bilinInterpol(TableState[i-1][j-1].d, TableState[i-1][j].d, TableState[i][j-1].d, TableState[i][j].d, fact1, fact2);
+		resState.u      = bilinInterpol(TableState[i-1][j-1].u, TableState[i-1][j].u, TableState[i][j-1].u, TableState[i][j].u, fact1, fact2);
+		resState.i      = (double)i;
+		resState.j      = (double)j;
+	  }
       else if (props=="HS")
       {
         resState.h = bilinInterpol(TableState[i-1][j-1].h, TableState[i-1][j].h, TableState[i][j-1].h, TableState[i][j].h, fact1, fact2);
@@ -487,30 +788,12 @@ void CLookUpTable::bilinInterpolState(FluidState &resState,
         resState.i      = (double)i;
         resState.j      = (double)j;
       }
-      else if (props=="VISCPROPS")
+      else if (props=="ENERGY")
       {
-        resState.lambda = bilinInterpol(TableState[i-1][j-1].lambda, TableState[i-1][j].lambda, TableState[i][j-1].lambda, TableState[i][j].lambda, fact1, fact2);
-        resState.eta    = bilinInterpol(TableState[i-1][j-1].eta, TableState[i-1][j].eta, TableState[i][j-1].eta, TableState[i][j].eta, fact1, fact2);
-        resState.cp     = bilinInterpol(TableState[i-1][j-1].cp, TableState[i-1][j].cp, TableState[i][j-1].cp, TableState[i][j].cp, fact1, fact2);
+        resState.u      = bilinInterpol(TableState[i-1][j-1].u, TableState[i-1][j].u, TableState[i][j-1].u, TableState[i][j].u, fact1, fact2);
         resState.i      = (double)i;
         resState.j      = (double)j;
       }
-      else if (props=="PRESSUREANDENTHALPY")
-      {
-        resState.P      = bilinInterpol(TableState[i-1][j-1].P, TableState[i-1][j].P, TableState[i][j-1].P, TableState[i][j].P, fact1, fact2);
-        resState.h      = bilinInterpol(TableState[i-1][j-1].h, TableState[i-1][j].h, TableState[i][j-1].h, TableState[i][j].h, fact1, fact2);
-        resState.i      = (double)i;
-        resState.j      = (double)j;
-      }
-      else if (props=="ENTHANDPRESSDERIV")
-      {
-        resState.h      = bilinInterpol(TableState[i-1][j-1].h, TableState[i-1][j].h, TableState[i][j-1].h, TableState[i][j].h, fact1, fact2);
-        resState.alpha  = bilinInterpol(TableState[i-1][j-1].alpha, TableState[i-1][j].alpha, TableState[i][j-1].alpha, TableState[i][j].alpha, fact1, fact2);
-        resState.beta   = bilinInterpol(TableState[i-1][j-1].beta, TableState[i-1][j].beta, TableState[i][j-1].beta, TableState[i][j].beta, fact1, fact2);
-        resState.i      = (double)i;
-        resState.j      = (double)j;
-      }
-//      else if (mpi_rank==0) {cout << "wrong input props in bilinInterpolState: " << props << endl; throw(-1);}
 };
 
 double CLookUpTable::bilinInterpol( double a1,

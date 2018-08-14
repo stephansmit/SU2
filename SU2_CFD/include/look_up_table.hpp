@@ -169,7 +169,8 @@ public:
 					 double rho_max,
 					 double T_min,
 					 double T_max,
-					 string interpolation_scheme );
+					 string interpolation_scheme,
+					 bool createTable);
 
 
 		/*!
