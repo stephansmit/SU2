@@ -96,15 +96,23 @@ struct FluidState {
 };
 
 
-void InitializeTableStateRhoTWithCP(void);
+void CreateTableRhoT(void);
+
 void ReadTableRhoT(string table_name);
+
+
+// Table writing an reading
+
 int ReadTableBIN(const char *fileName);
+
 void SaveTableBIN(const char *fileName);
+
 void SaveTableTEC(const char *fileName);
 
-su2double InterpolateTransferTable(string columns, su2double column1_value,su2double column2_value);
-int InterpolatePropertiesTable(string table_name, su2double rho,su2double T);
-double calc_derivative( string property,
+
+// CoolProp functions
+
+double CoolPropCalcDerivative( string property,
 						string withrespect_to,
 						string at_constant,
 						string InputSpec,
@@ -112,11 +120,33 @@ double calc_derivative( string property,
 						double input2,
 						string fluid_name);
 
-void coolprop_allprops_su2( string InputSpec,
+void CoolPropGetFluidState( string InputSpec,
 							string fluid_name,
 							double input1,
 							double input2,
 							struct FluidState &state);
+
+double CoolPropGetVaporQuality( string InputSpec,
+							string fluid_name,
+							double input1,
+							double input2);
+// Interpolation functions
+
+
+void InterpolateProperties(const char* InputSpec,
+		double Input1,
+		double Input2,
+		struct FluidState *state, const char *props="ALL");
+
+void bilinInterpolState(FluidState &resState,
+		  const int i,
+		  const int j,
+          const double fact1,
+		  const double fact2,
+		  const char *props);
+
+double bilinInterpol(double a1, double a2, double b1, double b2, double fact1, double fact2);
+
 
 public:
 		FluidState **TableState;
@@ -336,26 +366,18 @@ public:
 		 */
 		void ComputeDerivativeNRBC_Prho (su2double P, su2double rho );
 
+
 		bool CheckIfInterpolated_rhoe(su2double rho, su2double e );
+
 		bool CheckIfInterpolated_PT(su2double P, su2double T );
+
 		bool CheckIfInterpolated_Prho(su2double P, su2double rho );
+
 		bool CheckIfInterpolated_hs(su2double h, su2double s );
+
 		bool CheckIfInterpolated_rhoT(su2double rho, su2double T );
+
 		bool CheckIfInterpolated_Ps(su2double P, su2double s );
-
-		void fluidprop_allprops_(const char* InputSpec,
-				double Input1,
-				double Input2,
-				struct FluidState *state, const char *props="ALL");
-		void bilinInterpolState(FluidState &resState,
-				  const int i,
-				  const int j,
-		          const double fact1,
-				  const double fact2,
-				  const char *props);
-
-		double bilinInterpol(double a1, double a2, double b1, double b2, double fact1, double fact2);
-
 
 
 };
