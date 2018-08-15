@@ -636,6 +636,8 @@ void CConfig::SetConfig_Options(unsigned short val_iZone, unsigned short val_nZo
    addEnumOption("TABLE_INTERPOLATIONSCHEME", Table_InterpolationScheme, TableInterpolationScheme_Map, POLYNOMIAL);
    /* DESCRIPTION: Distribution of the density column in table */
    addEnumOption("TABLE_DISTRIBUTION", Table_Distribution, TableDistribution_Map, UNIFORM);
+   /* DESCRIPTION: Option to turn on generating the table */
+   addBoolOption("CREATE_TABLE", CreateTable, false);
 
    /* DESCRIPTION: Number of elements for column 1 (Density) table */
    addUnsignedShortOption("TABLE_IMAX", Table_IMax, 100);

@@ -720,6 +720,10 @@ inline unsigned short CConfig::GetTable_IMax(void) { return Table_IMax; }
 
 inline unsigned short CConfig::GetTable_JMax(void) { return Table_JMax; }
 
+inline bool CConfig::GetTable_CreateTable(void) { return CreateTable; }
+
+
+
 inline su2double CConfig::GetTable_TMin(void) { return Table_TMin; }
 
 inline su2double CConfig::GetTable_TMax(void) { return Table_TMax; }

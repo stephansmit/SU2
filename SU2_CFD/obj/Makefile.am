@@ -60,6 +60,8 @@ libSU2Core_sources = \
   ../include/definition_structure.hpp \
   ../include/fluid_model.hpp \
   ../include/fluid_model.inl \
+  ../include/look_up_table.hpp \
+  ../include/look_up_table.inl \
   ../include/integration_structure.hpp \
   ../include/integration_structure.inl \
   ../include/driver_structure.hpp \
@@ -79,9 +81,11 @@ libSU2Core_sources = \
   ../include/transfer_structure.inl \
   ../src/definition_structure.cpp \
   ../src/fluid_model.cpp \
+  ../src/fluid_model_lut.cpp \
   ../src/fluid_model_pig.cpp \
   ../src/fluid_model_pvdw.cpp \
   ../src/fluid_model_ppr.cpp \
+  ../src/look_up_table.cpp \
   ../src/integration_structure.cpp \
   ../src/integration_time.cpp \
   ../src/driver_structure.cpp \
@@ -125,6 +129,7 @@ libSU2Core_sources = \
   ../src/transfer_physics.cpp \
   ../src/transfer_structure.cpp \
   ../src/transport_model.cpp \
+  ../src/transport_model_lut.cpp \
   ../src/transport_model_toluene.cpp \
   ../src/variable_adjoint_mean.cpp \
   ../src/variable_adjoint_mean_inc.cpp \
@@ -145,8 +150,10 @@ su2_cfd_sources = \
   ../include/SU2_CFD.hpp \
   ../src/SU2_CFD.cpp
 
-libSU2Core_cxx_flags = -fPIC
-libSU2Core_libadd = 
+libSU2Core_cxx_flags = -fPIC 
+libSU2Core_libadd =
+#libSU2Core_libadd += @CoolProp_LD@
+
 
 su2_cfd_cxx_flags =
 su2_cfd_ldadd =
@@ -155,6 +162,7 @@ su2_cfd_ldadd =
 su2_cfd_cxx_flags += @su2_externals_INCLUDES@
 su2_cfd_ldadd += @su2_externals_LIBS@
 libSU2Core_cxx_flags += @su2_externals_INCLUDES@
+libSU2Core_cxx_flags += @CoolProp_CXX@
 
 # if BUILD_MUTATIONPP
 su2_cfd_cxx_flags += @MUTATIONPP_CXX@
@@ -181,6 +189,10 @@ su2_cfd_cxx_flags += @ZLIB_CXX@
 su2_cfd_ldadd += @ZLIB_LD@
 # endif
 
+# if BUILD_CoolProp
+su2_cfd_cxx_flags += @CoolProp_CXX@
+su2_cfd_ldadd += @CoolProp_LD@
+# endif
 if BUILD_NORMAL
 libSU2Core_a_SOURCES = $(libSU2Core_sources)
 libSU2Core_a_CXXFLAGS = $(libSU2Core_cxx_flags)

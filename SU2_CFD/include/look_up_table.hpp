@@ -59,6 +59,7 @@ string table_filename;
 string table_fluid;
 string table_distribution;
 string table_interpolation_scheme;
+bool create_table;
 double rhomin, rhomax;
 double Tmin, Tmax;
 

@@ -853,6 +853,8 @@ private:
   unsigned short  Table_Distribution;   	/*!< \brief Distribution of density column for LUT model.  */
   unsigned short Table_IMax;	/*!< \brief Number of elements in density column for LUT model.  */
   unsigned short Table_JMax;	/*!< \brief Number of elements in temperature column for LUT model.  */
+  bool CreateTable;	/*!< \brief Option to create table with Coolprop */
+
   su2double Table_TMin;			/*!< \brief Minimum temperature value in table for LUT model.  */
   su2double Table_TMax;			/*!< \brief Maximum temperature value in table for LUT model.  */
   su2double Table_RhoMin;		/*!< \brief Minimum density value in table for LUT model.  */
@@ -3102,6 +3104,8 @@ public:
   su2double GetTable_RhoMin(void);
 
   su2double GetTable_RhoMax(void);
+
+  bool GetTable_CreateTable(void);
 
 
   /*!

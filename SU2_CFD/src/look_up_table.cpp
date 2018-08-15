@@ -54,6 +54,7 @@ CLookUpTable::CLookUpTable(CConfig *config){
 	table_fluid= config->GetTable_Fluid();
 	table_distribution = config->GetTable_Distribution();
 	table_interpolation_scheme = config->GetTable_InterpolationScheme();
+	create_table = config->GetTable_CreateTable();
 	rhomin = config->GetTable_RhoMin();
 	rhomax = config->GetTable_RhoMax();
 	Tmin = config->GetTable_TMin();
@@ -215,8 +216,11 @@ void CLookUpTable::CreateTableRhoT(void){
         if (TableState[i][j].lambda<0.0) TableState[i][j].lambda=0.0;
       }
     }
-//	SaveTableTEC(table_filename.c_str());
-	SaveTableBIN(table_filename.c_str());
+    string filename_tec = table_filename + ".tec";
+    string filename_bin = table_filename + ".bin";
+
+	SaveTableTEC(filename_tec.c_str());
+	SaveTableBIN(filename_bin.c_str());
 
 }
 

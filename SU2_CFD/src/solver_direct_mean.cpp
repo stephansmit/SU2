@@ -3663,7 +3663,7 @@ void CEulerSolver::SetNondimensionalization(CGeometry *geometry, CConfig *config
       break;
 
     case LUT_GAS:
-      FluidModel = new CLUTFluidModel(config->GetTable_Name());
+      FluidModel = new CLUTFluidModel(config);
 	  if (free_stream_temp) {
 	    FluidModel->SetTDState_PT(Pressure_FreeStream, Temperature_FreeStream);
 	    Density_FreeStream = FluidModel->GetDensity();
