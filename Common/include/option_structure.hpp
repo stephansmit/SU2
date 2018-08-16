@@ -428,7 +428,8 @@ enum ENUM_FLUIDMODEL {
 	IDEAL_GAS = 1, /*!< \brief _____. */
 	VW_GAS = 2,
 	PR_GAS = 3,
-	LUT_GAS = 4
+	LUT_GAS = 4,
+	CP_GAS = 5
 };
 
 static const map<string, ENUM_FLUIDMODEL> FluidModel_Map = CCreateMap<string, ENUM_FLUIDMODEL>
@@ -436,7 +437,9 @@ static const map<string, ENUM_FLUIDMODEL> FluidModel_Map = CCreateMap<string, EN
 ("IDEAL_GAS", IDEAL_GAS)
 ("VW_GAS", VW_GAS)
 ("PR_GAS", PR_GAS)
-("LUT_GAS", LUT_GAS);
+("LUT_GAS", LUT_GAS)
+("CP_GAS", CP_GAS);
+
 
 /*!
  * \brief types of interpolation scheme of table
@@ -499,7 +502,9 @@ enum ENUM_VISCOSITYMODEL {
 	CONSTANT_VISCOSITY = 0, /*!< \brief _____. */
 	SUTHERLAND = 1,
 	TOLUENE_VISCOSITY = 2,
-	LUT_VISCOSITY = 3
+	LUT_VISCOSITY = 3,
+	CP_VISCOSITY = 4
+
 
 };
 
@@ -507,7 +512,9 @@ static const map<string, ENUM_VISCOSITYMODEL> ViscosityModel_Map = CCreateMap<st
 ("CONSTANT_VISCOSITY", CONSTANT_VISCOSITY)
 ("SUTHERLAND", SUTHERLAND)
 ("TOLUENE_VISCOSITY", TOLUENE_VISCOSITY)
-("LUT_VISCOSITY", LUT_VISCOSITY);
+("LUT_VISCOSITY", LUT_VISCOSITY)
+("CP_VISCOSITY", CP_VISCOSITY);
+
 
 /*!
  * \brief types of thermal conductivity model
@@ -516,15 +523,17 @@ enum ENUM_CONDUCTIVITYMODEL {
 	CONSTANT_CONDUCTIVITY = 0, /*!< \brief _____. */
 	CONSTANT_PRANDTL = 1,
 	TOLUENE_CONDUCTIVITY = 2,
-	LUT_CONDUCTIVITY = 3
-
+	LUT_CONDUCTIVITY = 3,
+	CP_CONDUCTIVITY =4
 };
 
 static const map<string, ENUM_CONDUCTIVITYMODEL> ConductivityModel_Map = CCreateMap<string, ENUM_CONDUCTIVITYMODEL>
 ("CONSTANT_CONDUCTIVITY", CONSTANT_CONDUCTIVITY)
 ("CONSTANT_PRANDTL", CONSTANT_PRANDTL)
 ("TOLUENE_CONDUCTIVITY", TOLUENE_CONDUCTIVITY)
-("LUT_CONDUCTIVITY", LUT_CONDUCTIVITY);
+("LUT_CONDUCTIVITY", LUT_CONDUCTIVITY)
+("CP_CONDUCTIVITY", CP_CONDUCTIVITY);
+
 
 /*!
  * \brief types of unsteady mesh motion

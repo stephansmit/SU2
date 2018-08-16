@@ -81,6 +81,7 @@ libSU2Core_sources = \
   ../include/transfer_structure.inl \
   ../src/definition_structure.cpp \
   ../src/fluid_model.cpp \
+  ../src/fluid_model_cp.cpp \
   ../src/fluid_model_lut.cpp \
   ../src/fluid_model_pig.cpp \
   ../src/fluid_model_pvdw.cpp \
@@ -131,6 +132,7 @@ libSU2Core_sources = \
   ../src/transport_model.cpp \
   ../src/transport_model_lut.cpp \
   ../src/transport_model_toluene.cpp \
+  ../src/transport_model_cp.cpp \
   ../src/variable_adjoint_mean.cpp \
   ../src/variable_adjoint_mean_inc.cpp \
   ../src/variable_adjoint_turbulent.cpp \

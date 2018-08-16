@@ -3675,7 +3675,19 @@ void CEulerSolver::SetNondimensionalization(CGeometry *geometry, CConfig *config
 	    config->SetTemperature_FreeStream(Temperature_FreeStream);
 	  }
 	  break;
-
+    case CP_GAS:
+      FluidModel = new CCPFluidModel(config->GetTable_Fluid());
+	  if (free_stream_temp) {
+	    FluidModel->SetTDState_PT(Pressure_FreeStream, Temperature_FreeStream);
+	    Density_FreeStream = FluidModel->GetDensity();
+	    config->SetDensity_FreeStream(Density_FreeStream);
+	  }
+	  else {
+	    FluidModel->SetTDState_Prho(Pressure_FreeStream, Density_FreeStream );
+	    Temperature_FreeStream = FluidModel->GetTemperature();
+	    config->SetTemperature_FreeStream(Temperature_FreeStream);
+	  }
+	  break;
   }
 
   Mach2Vel_FreeStream = FluidModel->GetSoundSpeed();
@@ -3726,7 +3738,6 @@ void CEulerSolver::SetNondimensionalization(CGeometry *geometry, CConfig *config
             that is found from the Reynolds number. The viscosity is computed
             from the dimensional version of Sutherland's law or the constant
             viscosity, depending on the input option.---*/
-
       FluidModel->SetLaminarViscosityModel(config);
 
       Viscosity_FreeStream = FluidModel->GetLaminarViscosity();
@@ -3872,10 +3883,14 @@ void CEulerSolver::SetNondimensionalization(CGeometry *geometry, CConfig *config
       FluidModel = new CLUTFluidModel(config);
       FluidModel->SetEnergy_Prho(Pressure_FreeStreamND, Density_FreeStreamND);
       break;
+    case CP_GAS:
+      FluidModel = new CCPFluidModel(config->GetTable_Fluid());
+      FluidModel->SetEnergy_Prho(Pressure_FreeStreamND, Density_FreeStreamND);
+      break;
   }
-  
+
   Energy_FreeStreamND = FluidModel->GetStaticEnergy() + 0.5*ModVel_FreeStreamND*ModVel_FreeStreamND;
-  
+
   if (viscous) {
     
     /*--- Constant viscosity model ---*/

@@ -273,6 +273,44 @@ public:
 
 };
 
+class CViscosityCP : public CViscosityModel {
+protected:
+  string FluidName;
+
+public:
+
+  /*!
+   * \brief Constructor of the class.
+   */
+  CViscosityCP(void);
+
+  /*!
+   * \brief Constructor of the class.
+   */
+  CViscosityCP(string fluid_name);
+
+
+  /*!
+   * \brief Constructor of the class.
+   */
+//  CViscosityToluene(su2double mu_ref, su2double t_ref, su2double s);
+
+  /*!
+   * \brief Destructor of the class.
+   */
+  virtual ~CViscosityCP(void);
+
+  /*!
+   * \brief Set Viscosity.
+   */
+  void SetViscosity(su2double T, su2double rho);
+
+  /*!
+   * \brief Set Viscosity Derivatives.
+   */
+  void SetDerViscosity(su2double T, su2double rho);
+
+};
 
 /*!
  * \class CThermalConductivityModel
@@ -456,7 +494,7 @@ protected:
   su2double 	 dDeltaKtdrho_T(su2double T, su2double rho);
   su2double 	 dDeltaKtdT_rho(su2double T, su2double rho);
   su2double 	 dKt_0dT_rho(su2double T);
-  CLookUpTable*   LookUpTable;
+  CLookUpTable *LookUpTable;
 
 public:
 
@@ -494,5 +532,45 @@ public:
 
 };
 
+class CConductivityCP : public CConductivityModel {
+protected:
+
+  string FluidName;
+
+public:
+
+    /*!
+     * \brief Constructor of the class.
+     */
+    CConductivityCP(void);
+
+    /*!
+    * \brief Constructor of the class.
+    */
+    CConductivityCP(string fluid_name);
+
+    /*!
+     * \brief Destructor of the class.
+     */
+    virtual ~CConductivityCP(void);
+
+    /*!
+     * \brief Constructor of the class.
+     */
+//    CConductivityToluene();
+
+    /*!
+     * \brief Set Thermal conductivity.
+     * \brief par1 -> Cp.
+     * \brief par2 -> Mu.
+     */
+    void SetConductivity(su2double T, su2double rho);
+
+    /*!
+     * \brief Set Thermal conductivity derivatives.
+     */
+    void SetDerConductivity(su2double T, su2double rho);
+
+};
 
 #include "transport_model.inl"

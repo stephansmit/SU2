@@ -46,7 +46,7 @@ CLookUpTable::CLookUpTable(void) {
 CLookUpTable::CLookUpTable(CConfig *config){
 	int rank = MASTER_NODE;
 	#ifdef HAVE_MPI
-	  int rank;
+//	  int rank;
 	  MPI_Comm_rank(MPI_COMM_WORLD, &rank);
 	#endif
 
@@ -55,12 +55,12 @@ CLookUpTable::CLookUpTable(CConfig *config){
 	table_distribution = config->GetTable_Distribution();
 	table_interpolation_scheme = config->GetTable_InterpolationScheme();
 	create_table = config->GetTable_CreateTable();
-	rhomin = config->GetTable_RhoMin();
-	rhomax = config->GetTable_RhoMax();
-	Tmin = config->GetTable_TMin();
-	Tmax = config->GetTable_TMax();
-	imax = config->GetTable_IMax();
-	jmax = config->GetTable_JMax();
+	rhomin = (double)config->GetTable_RhoMin();
+	rhomax = (double)config->GetTable_RhoMax();
+	Tmin = (double)config->GetTable_TMin();
+	Tmax = (double)config->GetTable_TMax();
+	imax = (int)config->GetTable_IMax();
+	jmax = (int)config->GetTable_JMax();
 
 	switch (config->GetTable_InterpolationScheme()) {
 	  case BILINEAR:
@@ -75,17 +75,26 @@ CLookUpTable::CLookUpTable(CConfig *config){
 		table_distribution = "UNIFORM";
 		break;
 	  case LOGARITMIC:
-		table_distribution = "LOGARITMIC";
+		table_distribution = "LOG";
 		break;
 	}
 
 	OutputState = new FluidState;
+	OutputState->T =(Tmin+Tmax)/2.0;
+	OutputState->d =(rhomin+rhomax)/2.0;
+
 	TableState = new FluidState*[imax];
     for (int i=0; i<imax; i++)
     	TableState[i] = new FluidState[jmax];
 
     if (rank == MASTER_NODE){
-    	CreateTableRhoT();
+    	if (create_table) {
+    		CreateTableRhoT();
+    	}
+    	else{
+    		ReadTableRhoT(table_filename);
+    	}
+
     }
     else {
     	ReadTableRhoT(table_filename);
@@ -107,7 +116,7 @@ CLookUpTable::CLookUpTable(string table_name,
 						   ){
 	int rank = MASTER_NODE;
 	#ifdef HAVE_MPI
-	  int rank;
+//	  int rank;
 	  MPI_Comm_rank(MPI_COMM_WORLD, &rank);
 	#endif
 
@@ -152,15 +161,15 @@ void CLookUpTable::SetTDState_rhoe (su2double rho, su2double e) {
 }
 
 void CLookUpTable::SetTDState_PT (su2double P, su2double T ){
-	if (not CheckIfInterpolated_PT(P,T)) InterpolateProperties("PT",(double) P, T, OutputState, "ALL" );
+	if (not CheckIfInterpolated_PT(P,T)) InterpolateProperties("PT",(double) P,(double) T, OutputState, "ALL" );
 }
 
 void CLookUpTable::SetTDState_Prho (su2double P, su2double rho ){
-	if (not CheckIfInterpolated_Prho(P,rho)) InterpolateProperties("PD",(double) P, rho, OutputState, "ALL" );
+	if (not CheckIfInterpolated_Prho(P,rho)) InterpolateProperties("PD",(double) P, (double) rho, OutputState, "ALL" );
 };
 
 void CLookUpTable::SetEnergy_Prho (su2double P, su2double rho ){
-	if (not CheckIfInterpolated_Prho(P,rho)) InterpolateProperties("PD",(double) P, rho, OutputState, "ENERGY" );
+	if (not CheckIfInterpolated_Prho(P,rho)) InterpolateProperties("PD",(double) P, (double) rho, OutputState, "ALL" );
 };
 
 void CLookUpTable::SetTDState_hs (su2double h, su2double s ){
@@ -168,11 +177,11 @@ void CLookUpTable::SetTDState_hs (su2double h, su2double s ){
 }
 
 void CLookUpTable::SetTDState_rhoT (su2double rho, su2double T ){
-	if (not CheckIfInterpolated_rhoT(rho,T)) InterpolateProperties("Tv",(double) T, 1.0/rho, OutputState, "ALL" );
+	if (not CheckIfInterpolated_rhoT(rho,T)) InterpolateProperties("Tv",(double) T, (double) 1.0/rho, OutputState, "ALL" );
 };
 
 void CLookUpTable::SetTDState_Ps (su2double P, su2double s ){
-	if (not CheckIfInterpolated_Ps(P,s)) InterpolateProperties("PS",(double) P, s, OutputState, "ALL" );
+	if (not CheckIfInterpolated_Ps(P,s)) InterpolateProperties("PS",(double) P, (double) s, OutputState, "ALL" );
 };
 
 //void CLookUpTable::ComputeDerivativeNRBC_Prho (su2double P, su2double rho );
@@ -210,8 +219,8 @@ void CLookUpTable::CreateTableRhoT(void){
 		Tmin_1ph = tA;
 		}
 
-        double temp = Tmin_1ph-273.15 + (double)i/(imax-1.0)*(Tmax-Tmin_1ph);
-        CoolPropGetFluidState("TD", table_fluid, temp+273.15, dens, TableState[i][j]);
+        double temp = Tmin_1ph + (double)i/(imax-1.0)*(Tmax-Tmin_1ph);
+        CoolPropGetFluidState("TD", table_fluid, temp, dens, TableState[i][j]);
         if (TableState[i][j].cp<0.0) TableState[i][j].cp=0.0;
         if (TableState[i][j].lambda<0.0) TableState[i][j].lambda=0.0;
       }
@@ -228,7 +237,10 @@ void CLookUpTable::CreateTableRhoT(void){
 int CLookUpTable::ReadTableBIN(const char *fileName)
 {
   FILE *fp = fopen(fileName, "rb");
-  if (fp == NULL) return 0;
+  if (fp == NULL) {
+	  cout << "TABLE NOT FOUND" << endl;
+	  return 0;
+  }
   int imaxR, jmaxR;
   fread(&imaxR, sizeof(int), 1, fp);
   fread(&jmaxR, sizeof(int), 1, fp);
@@ -253,7 +265,7 @@ void CLookUpTable::SaveTableTEC(const char *fileName)
 
   for (int j=0; j<jmax; j++)
     for (int i=0; i<imax; i++)
-      fprintf(fp, "%.8le\t%.8le\t%.8le\t%.8le\t%.8le\t%.8le\t%.8le\t%.8le\t%.8le\t%.8le\t%.8le\t%.8le\t%.8le\t%.8le\t%.8le\n",//%.8le\t%.8le\t%.8le\t%.8le\t%.8le\n",
+    	fprintf(fp, "%.8le\t%.8le\t%.8le\t%.8le\t%.8le\t%.8le\t%.8le\t%.8le\t%.8le\t%.8le\t%.8le\t%.8le\t%.8le\t%.8le\t%.8le\n",//%.8le\t%.8le\t%.8le\t%.8le\t%.8le\n",
     		  TableState[i][j].d, TableState[i][j].T, TableState[i][j].v, TableState[i][j].s, TableState[i][j].P, TableState[i][j].u, TableState[i][j].h, TableState[i][j].eta, TableState[i][j].lambda,
     		  TableState[i][j].cp, TableState[i][j].cv, TableState[i][j].c, TableState[i][j].alpha, TableState[i][j].beta, TableState[i][j].zeta);//, state[i][j].deta_drho, state[i][j].deta_dT,
               //state[i][j].dlam_drho, state[i][j].dlam_dT, 1.0 - (state[i][j].P*1.0e5/state[i][j].d/R/(state[i][j].T+273.15)));
@@ -275,7 +287,8 @@ void CLookUpTable::SaveTableBIN(const char *fileName)
 }
 
 void CLookUpTable::ReadTableRhoT(string filename){
-    ReadTableBIN(filename.c_str());
+    string filename_bin = table_filename + ".bin";
+    ReadTableBIN(filename_bin.c_str());
 }
 
 //interpolation functions
@@ -362,8 +375,8 @@ void CLookUpTable::InterpolateProperties( const char* InputSpec,
     {
 	// Inverse evaluation for h and s starting from an initial guess of rho and T.
 		  // We use a Newton solver and the gradients are approximated at second order.
-		  double dens = (*OutputState).d;
-		  double temp = Input2;
+		  double dens = rhomin;//(*OutputState).d;
+		  double temp = Tmax;//;
 		  double h_tg = Input1;
 		  double s_tg = Input2;
 
@@ -375,18 +388,23 @@ void CLookUpTable::InterpolateProperties( const char* InputSpec,
 		  while (it<nmax && err>toll)
 		  {
 			it++;
-
 			// find the cell
 			double ff;
 			if (strcmp(table_distribution.c_str(), "LOG")==0) ff = (log10(dens)-log10(TableState[0][0].d))/(log10(TableState[0][jmax-1].d)-log10(TableState[0][0].d));
 			else                                    ff = (dens-TableState[0][0].d)/(TableState[0][jmax-1].d-TableState[0][0].d);
+
 			jTab = ceil(ff*(double)(jmax-1));
 			fact1 = (dens-TableState[0][jTab-1].d)/(TableState[0][jTab].d-TableState[0][jTab-1].d);
-
 			iTab=0;
-			while((temp>(TableState[iTab][jTab-1].T+fact1*(TableState[iTab][jTab].T-TableState[iTab][jTab-1].T))) && (iTab<imax-1))   iTab++;
 
-			// calculate fact2
+			while((temp>(TableState[iTab][jTab-1].T+fact1*(TableState[iTab][jTab].T-TableState[iTab][jTab-1].T))) && (iTab<imax-1))   iTab++;
+			if (iTab==0) {
+				cout << "something wrong PT" << endl;
+				cout << fact1 << endl;
+				cout << TableState[iTab][jTab-1].T << endl;
+				cout << TableState[iTab][jTab-1].T+fact1*(TableState[iTab][jTab].T-TableState[iTab][jTab-1].T) << endl;
+				cout << temp << endl;
+			}			// calculate fact2
 			v1 = TableState[iTab-1][jTab-1].T+fact1*(TableState[iTab-1][jTab].T-TableState[iTab-1][jTab-1].T);
 			v2 = TableState[iTab  ][jTab-1].T+fact1*(TableState[iTab  ][jTab].T-TableState[iTab  ][jTab-1].T);
 			fact2 = (temp-v1)/(v2-v1);
@@ -423,7 +441,6 @@ void CLookUpTable::InterpolateProperties( const char* InputSpec,
 			double dtemp = (-dhdrho*((*OutputState).T - s_tg) + dsdrho*((*OutputState).P - h_tg))/det;
 
 			err = fabs(ddens)/dens + fabs(dtemp)/temp;
-
 			if (fabs(ddens)<dens) dens -= 0.75*ddens;
 			if (fabs(dtemp)<temp) temp -= 0.75*dtemp;
 		  }
@@ -434,8 +451,8 @@ void CLookUpTable::InterpolateProperties( const char* InputSpec,
 	{
 	// Inverse evaluation for h and s starting from an initial guess of rho and T.
 		  // We use a Newton solver and the gradients are approximated at second order.
-		  double dens = Input1;
-		  double temp = (*OutputState).u;
+		  double dens = rhomin;
+		  double temp = Tmax;
 		  double h_tg = Input1;
 		  double s_tg = Input2;
 
@@ -457,7 +474,13 @@ void CLookUpTable::InterpolateProperties( const char* InputSpec,
 
 			iTab=0;
 			while((temp>(TableState[iTab][jTab-1].T+fact1*(TableState[iTab][jTab].T-TableState[iTab][jTab-1].T))) && (iTab<imax-1))   iTab++;
-
+			if (iTab==0) {
+				cout << "something wrong DU" << endl;
+				cout << fact1 << endl;
+				cout << TableState[iTab][jTab-1].T << endl;
+				cout << TableState[iTab][jTab-1].T+fact1*(TableState[iTab][jTab].T-TableState[iTab][jTab-1].T) << endl;
+				cout << temp << endl;
+			}
 			// calculate fact2
 			v1 = TableState[iTab-1][jTab-1].T+fact1*(TableState[iTab-1][jTab].T-TableState[iTab-1][jTab-1].T);
 			v2 = TableState[iTab  ][jTab-1].T+fact1*(TableState[iTab  ][jTab].T-TableState[iTab  ][jTab-1].T);
@@ -506,8 +529,8 @@ void CLookUpTable::InterpolateProperties( const char* InputSpec,
     {
       // Inverse evaluation for h and s starting from an initial guess of rho and T.
       // We use a Newton solver and the gradients are approximated at second order.
-      double dens = (*OutputState).d;
-      double temp = (*OutputState).T;
+	  double dens = rhomin;
+	  double temp = Tmax;
       double h_tg = Input1;
       double s_tg = Input2;
 
@@ -577,8 +600,8 @@ void CLookUpTable::InterpolateProperties( const char* InputSpec,
     {
          // Inverse evaluation for h and s starting from an initial guess of rho and T.
          // We use a Newton solver and the gradients are approximated at second order.
-         double dens = Input2;
-         double temp = (*OutputState).T;
+		 double dens = rhomin;//(rhomin+rhomax)/2.0;//(*OutputState).d;
+		 double temp = Tmax;//;
          double h_tg = Input1;
          double s_tg = Input2;
 
@@ -600,7 +623,13 @@ void CLookUpTable::InterpolateProperties( const char* InputSpec,
 
            iTab=0;
            while((temp>(TableState[iTab][jTab-1].T+fact1*(TableState[iTab][jTab].T-TableState[iTab][jTab-1].T))) && (iTab<imax-1))   iTab++;
-
+			if (iTab==0) {
+				cout << "something wrong Prho" << endl;
+				cout << fact1 << endl;
+				cout << TableState[iTab][jTab-1].T << endl;
+				cout << TableState[iTab][jTab-1].T+fact1*(TableState[iTab][jTab].T-TableState[iTab][jTab-1].T) << endl;
+				cout << temp << endl;
+			}
            // calculate fact2
            v1 = TableState[iTab-1][jTab-1].T+fact1*(TableState[iTab-1][jTab].T-TableState[iTab-1][jTab-1].T);
            v2 = TableState[iTab  ][jTab-1].T+fact1*(TableState[iTab  ][jTab].T-TableState[iTab  ][jTab-1].T);
@@ -648,8 +677,8 @@ void CLookUpTable::InterpolateProperties( const char* InputSpec,
     {
           // Inverse evaluation for h and s starting from an initial guess of rho and T.
           // We use a Newton solver and the gradients are approximated at second order.
-          double dens = (*OutputState).d;
-          double temp = (*OutputState).T;
+          double dens = rhomin;
+          double temp = Tmax;
           double h_tg = Input1;
           double s_tg = Input2;
 
@@ -815,7 +844,7 @@ double CLookUpTable::bilinInterpol( double a1,
 
 void CLookUpTable::CoolPropGetFluidState(string InputSpec, string fluid_name, double input1, double input2, struct FluidState &state){
     state.P=CoolProp::PropsSI("P", string(1,InputSpec[0]), input1, string(1,InputSpec[1]), input2, fluid_name);
-    state.T=CoolProp::PropsSI("T", string(1,InputSpec[0]), input1, string(1,InputSpec[1]), input2, fluid_name)-273.15	;
+    state.T=CoolProp::PropsSI("T", string(1,InputSpec[0]), input1, string(1,InputSpec[1]), input2, fluid_name);
     state.d=CoolProp::PropsSI("D", string(1,InputSpec[0]), input1, string(1,InputSpec[1]), input2, fluid_name);
     state.v=1.0/state.d;
     state.h=CoolProp::PropsSI("H", string(1,InputSpec[0]), input1, string(1,InputSpec[1]), input2, fluid_name);
@@ -839,6 +868,10 @@ void CLookUpTable::CoolPropGetFluidState(string InputSpec, string fluid_name, do
     state.dhdP_rho=CoolProp::PropsSI("d(H)/d(P)|D", string(1,InputSpec[0]), input1, string(1,InputSpec[1]), input2, fluid_name);
     state.dsdrho_P=CoolProp::PropsSI("d(S)/d(D)|P", string(1,InputSpec[0]), input1, string(1,InputSpec[1]), input2, fluid_name);
     state.dsdP_rho=CoolProp::PropsSI("d(S)/d(P)|D", string(1,InputSpec[0]), input1, string(1,InputSpec[1]), input2, fluid_name);
+    state.alpha = 0.0;
+   	state.beta = 0.0;
+    state.zeta = 0.0;
+
 }
 
 double CLookUpTable::CoolPropCalcDerivative(string property, string withrespect_to, string at_constant, string InputSpec, double input1, double input2, string fluid_name){

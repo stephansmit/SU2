@@ -648,9 +648,9 @@ void CConfig::SetConfig_Options(unsigned short val_iZone, unsigned short val_nZo
    /* DESCRIPTION: Maximum temperature in table */
    addDoubleOption("TABLE_TMAX", Table_TMax, 600.);
    /* DESCRIPTION: Minimum Density in table */
-   addDoubleOption("TABLE_RHOMAX", Table_RhoMin, 0.01);
+   addDoubleOption("TABLE_RHOMIN", Table_RhoMin, 0.01);
    /* DESCRIPTION: Maximum Density in table */
-   addDoubleOption("TABLE_RHOMIN", Table_RhoMax, 10.);
+   addDoubleOption("TABLE_RHOMAX", Table_RhoMax, 10.);
 
 
 

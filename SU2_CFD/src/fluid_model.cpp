@@ -60,7 +60,6 @@ CFluidModel::~CFluidModel(void) {
 }
 
 void CFluidModel::SetLaminarViscosityModel (CConfig *config) {
-
   switch (config->GetKind_ViscosityModel()) {
   case CONSTANT_VISCOSITY:
     LaminarViscosity = new CConstantViscosity(config->GetMu_ConstantND());
@@ -74,11 +73,13 @@ void CFluidModel::SetLaminarViscosityModel (CConfig *config) {
   case LUT_VISCOSITY:
 	LaminarViscosity = new CViscosityLUT(LookUpTable);
 	break;
+  case CP_VISCOSITY:
+  	LaminarViscosity = new CViscosityCP(config->GetTable_Fluid());
+  	break;
   }
 }
 
 void CFluidModel::SetThermalConductivityModel (CConfig *config) {
-  
   switch (config->GetKind_ConductivityModel()) {
   case CONSTANT_CONDUCTIVITY:
     ThermalConductivity = new CConstantConductivity(config->GetKt_ConstantND());
@@ -89,10 +90,14 @@ void CFluidModel::SetThermalConductivityModel (CConfig *config) {
   case TOLUENE_CONDUCTIVITY:
     ThermalConductivity = new CConductivityToluene();
     break;
-  case LUT_VISCOSITY:
+  case LUT_CONDUCTIVITY:
 	ThermalConductivity = new CConductivityLUT(LookUpTable);
 	break;
+  case CP_CONDUCTIVITY:
+ 	ThermalConductivity = new CConductivityCP(config->GetTable_Fluid());
+ 	break;
   }
+
 }
 
 

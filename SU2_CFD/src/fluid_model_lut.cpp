@@ -79,7 +79,8 @@ CLUTFluidModel::CLUTFluidModel(CConfig *config) : CFluidModel() {
   Gas_Constant = 0.0;
   Cp = Gamma/Gamma_Minus_One*Gas_Constant;
   LookUpTable = new CLookUpTable(config);
-
+//  this->SetThermalConductivityModel(config);
+//  this->SetLaminarViscosityModel(config);
 }
 
 
@@ -88,47 +89,78 @@ CLUTFluidModel::~CLUTFluidModel(void) {
 }
 
 void CLUTFluidModel::SetTDState_rhoe (su2double rho, su2double e ) {
+//	cout << "SetTDState_rhoe" << endl;
 	LookUpTable->SetTDState_rhoe(rho,e);
 	CopyStateLUT();
 }
 
 void CLUTFluidModel::SetTDState_PT (su2double P, su2double T ) {
+//	cout << "SetTDState_PT" << endl;
 	LookUpTable->SetTDState_PT(P,T);
 	CopyStateLUT();
 }
 
 void CLUTFluidModel::SetTDState_Prho (su2double P, su2double rho ) {
+//	cout << "SetTDState_Prho" << endl;
 	LookUpTable->SetTDState_Prho(P,rho);
 	CopyStateLUT();
 }
 
 void CLUTFluidModel::SetEnergy_Prho (su2double P, su2double rho ) {
+//	cout << "SetEnergy_Prho" << endl;
 	LookUpTable->SetEnergy_Prho(P,rho);
 	StaticEnergy = LookUpTable->GetStaticEnergy();
 }
 
 void CLUTFluidModel::SetTDState_hs (su2double h, su2double s ) {
+//	cout << "SetTDState_hs" << endl;
 	LookUpTable->SetTDState_hs(h,s);
 	CopyStateLUT();
 }
 
 void CLUTFluidModel::SetTDState_Ps (su2double P, su2double s ) {
+//	cout << "SetTDState_Ps" << endl;
 	LookUpTable->SetTDState_Ps(P,s);
 	CopyStateLUT();
 }
 
 void CLUTFluidModel::SetTDState_rhoT (su2double rho, su2double T ) {
+//	cout << "SetTDState_rhoT" << endl;
 	LookUpTable->SetTDState_rhoT(rho,T);
+
 	CopyStateLUT();
 }
 
 void CLUTFluidModel::ComputeDerivativeNRBC_Prho(su2double P, su2double rho ){
+	//	cout << "SetTDState_rhoT" << endl;
 	LookUpTable->SetTDState_Prho(P, rho);
 	CopyStateLUT();
 }
 
 
 void CLUTFluidModel::CopyStateLUT(){
+//	if (isnan(LookUpTable->GetStaticEnergy())) cout << "GetStaticEnergy" <<endl;
+//	if (isnan(LookUpTable->GetEntropy())) cout << "GetEntropy" <<endl;
+//	if (isnan(LookUpTable->GetDensity())) cout << "GetDensity" <<endl;
+//	if (isnan(LookUpTable->GetPressure())) cout << "GetPressure" <<endl;
+//	if (isnan(LookUpTable->GetSoundSpeed2())) cout << "GetSoundSpeed2" <<endl;
+//	if (isnan(LookUpTable->GetTemperature())) cout << "GetTemperature" <<endl;
+//	if (isnan(LookUpTable->GetdPdrho_e())) cout << "GetdPdrho_e" <<endl;
+//	if (isnan(LookUpTable->GetdPde_rho())) cout << "GetdPde_rho" <<endl;
+//	if (isnan(LookUpTable->GetdTdrho_e())) cout << "GetdTdrho_e" <<endl;
+//	if (isnan(LookUpTable->GetdTde_rho())) cout << "GetdTde_rho" <<endl;
+//	if (isnan(LookUpTable->Getdhdrho_P())) cout << "Getdhdrho_P" <<endl;
+//	if (isnan(LookUpTable->GetdhdP_rho())) cout << "GetdhdP_rho" <<endl;
+//	if (isnan(LookUpTable->Getdsdrho_P())) cout << "Getdsdrho_P" <<endl;
+//	if (isnan(LookUpTable->GetdsdP_rho())) cout << "GetdsdP_rho" <<endl;
+//	if (isnan(LookUpTable->GetCp())) cout << "GetCp" <<endl;
+//	if (isnan(LookUpTable->GetLaminarViscosity())) cout << "GetLaminarViscosity" <<endl;
+//	if (isnan(LookUpTable->Getdmudrho_T())) cout << "Getdmudrho_T" <<endl;
+//	if (isnan(LookUpTable->GetdmudT_rho())) cout << "GetdmudT_rho" <<endl;
+//	if (isnan(LookUpTable->GetThermalConductivity())) cout << "GetThermalConductivity" <<endl;
+//	if (isnan(LookUpTable->Getdktdrho_T())) cout << "Getdktdrho_T" <<endl;
+//	if (isnan(LookUpTable->GetdktdT_rho())) cout << "GetdktdT_rho" <<endl;
+
 	StaticEnergy = LookUpTable->GetStaticEnergy();
     Entropy = LookUpTable->GetEntropy();
     Density = LookUpTable->GetDensity();
