@@ -95,21 +95,45 @@ struct FluidState {
         double dsdrho_P;
         double dsdP_rho;
 };
-
+struct TransferFluidState {
+        double P;
+        double d;
+        double h;
+        double s;
+};
+struct TransferFluidState2 {
+        double P;
+        double T;
+        double d;
+};
 
 void CreateTableRhoT(void);
+void CreateTablePs(void);
+void CreateTablePT(void);
+
 
 void ReadTableRhoT(string table_name);
+void ReadTablePs(string table_name);
+void ReadTablePT(string table_name);
+
 
 
 // Table writing an reading
 
 int ReadTableBIN(const char *fileName);
+int ReadTransferTableBIN(const char *fileName);
+int ReadTransferTable2BIN(const char *fileName);
+
+
 
 void SaveTableBIN(const char *fileName);
-
 void SaveTableTEC(const char *fileName);
 
+
+void SaveTransferTableBIN(const char *fileName);
+void SaveTransferTableTEC(const char *fileName);
+void SaveTransferTable2BIN(const char *fileName);
+void SaveTransferTable2TEC(const char *fileName);
 
 // CoolProp functions
 
@@ -127,6 +151,17 @@ void CoolPropGetFluidState( string InputSpec,
 							double input2,
 							struct FluidState &state);
 
+void CoolPropGetTransferFluidStatePS( string InputSpec,
+									string fluid_name,
+									double input1,
+									double input2,
+									struct TransferFluidState &state);
+
+void CoolPropGetTransferFluidStatePT( string InputSpec,
+									string fluid_name,
+									double input1,
+									double input2,
+									struct TransferFluidState2 &state);
 double CoolPropGetVaporQuality( string InputSpec,
 							string fluid_name,
 							double input1,
@@ -145,12 +180,27 @@ void bilinInterpolState(FluidState &resState,
           const double fact1,
 		  const double fact2,
 		  const char *props);
+double bilinInterpolTransferState(
+		  const int i,
+		  const int j,
+		  const double fact1,
+		  const double fact2
+		);
+
+double bilinInterpolTransferState2(
+		  const int i,
+		  const int j,
+		  const double fact1,
+		  const double fact2
+		);
 
 double bilinInterpol(double a1, double a2, double b1, double b2, double fact1, double fact2);
 
 
 public:
 		FluidState **TableState;
+		TransferFluidState **TransferTableState;
+		TransferFluidState2 **TransferTableState2;
 		FluidState *OutputState;
 
 	     /*!

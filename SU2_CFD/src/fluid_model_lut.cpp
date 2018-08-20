@@ -79,8 +79,6 @@ CLUTFluidModel::CLUTFluidModel(CConfig *config) : CFluidModel() {
   Gas_Constant = 0.0;
   Cp = Gamma/Gamma_Minus_One*Gas_Constant;
   LookUpTable = new CLookUpTable(config);
-//  this->SetThermalConductivityModel(config);
-//  this->SetLaminarViscosityModel(config);
 }
 
 
@@ -127,14 +125,16 @@ void CLUTFluidModel::SetTDState_Ps (su2double P, su2double s ) {
 void CLUTFluidModel::SetTDState_rhoT (su2double rho, su2double T ) {
 //	cout << "SetTDState_rhoT" << endl;
 	LookUpTable->SetTDState_rhoT(rho,T);
-
 	CopyStateLUT();
 }
 
 void CLUTFluidModel::ComputeDerivativeNRBC_Prho(su2double P, su2double rho ){
-	//	cout << "SetTDState_rhoT" << endl;
+//	cout << "SetTDState_rhoT" << endl;
 	LookUpTable->SetTDState_Prho(P, rho);
-	CopyStateLUT();
+    dhdrho_P = LookUpTable->Getdhdrho_P();
+    dhdP_rho = LookUpTable->GetdhdP_rho();
+    dsdrho_P = LookUpTable->Getdsdrho_P();
+    dsdP_rho = LookUpTable->GetdsdP_rho();
 }
 
 
@@ -171,24 +171,6 @@ void CLUTFluidModel::CopyStateLUT(){
     dPde_rho = LookUpTable->GetdPde_rho();
     dTdrho_e = LookUpTable->GetdTdrho_e();
     dTde_rho = LookUpTable->GetdTde_rho();
-    dhdrho_P = LookUpTable->Getdhdrho_P();
-    dhdP_rho = LookUpTable->GetdhdP_rho();
-    dsdrho_P = LookUpTable->Getdsdrho_P();
-    dsdP_rho = LookUpTable->GetdsdP_rho();
-    Cp = LookUpTable->GetCp();
-    Mu = LookUpTable->GetLaminarViscosity();
-    dmudrho_T = LookUpTable->Getdmudrho_T();
-    dmudT_rho = LookUpTable->GetdmudT_rho();
-    Kt = LookUpTable->GetThermalConductivity();
-    dktdrho_T = LookUpTable->Getdktdrho_T();
-    dktdT_rho = LookUpTable->GetdktdT_rho();
-
-
-//	dhdrho_P= LookUpTable->
-//	dhdP_rho= 1.0/dPde_rho +1.0/rho;
-//	dPds_rho= rho*rho*(SoundSpeed2 - dPdrho_T)/dPdT_rho;
-//	dsdP_rho= 1.0/dPds_rho;
-//	dsdrho_P= -SoundSpeed2/dPds_rho;
 }
 
 
