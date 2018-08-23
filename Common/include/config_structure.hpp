@@ -651,7 +651,8 @@ private:
   AdjWave_FileName,					/*!< \brief Adjoint wave variables output file. */
   Residual_FileName,				/*!< \brief Residual variables output file. */
   Conv_FileName,					/*!< \brief Convergence history output file. */
-  LUT_FileName, /*!< \brief Look up table file name. */
+  LUT_Thermodynamic_FileName, /*!< \brief Look up table file name. */
+  LUT_Transport_FileName, /*!< \brief Look up table file name. */
   Breakdown_FileName,			    /*!< \brief Breakdown output file. */
   Conv_FileName_FSI,					/*!< \brief Convergence history output file. */
   Restart_FlowFileName,			/*!< \brief Restart file for flow variables. */
@@ -7469,7 +7470,10 @@ public:
   bool GetBoolDimensionalLUTConductivity(void);
 
 
-  string GetLUTFileName(void);
+  string GetLUTThermodynamicFileName(void);
+
+  string GetLUTTransportFileName(void);
+
 
   bool GetLUT_Debug_Mode(void);
 };

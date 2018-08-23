@@ -273,11 +273,11 @@ CLookUpTable::CLookUpTable(CConfig *config, bool dimensional) :
 		Energy_Reference_Value = config->GetEnergy_Ref();
 	}
 
-	if ((config->GetLUTFileName()).find(".tec") != string::npos) {
+	if ((config->GetLUTThermodynamicFileName()).find(".tec") != string::npos) {
 		if (rank == MASTER_NODE) {
 			cout << ".tec type LUT found" << endl;
 		}
-		LookUpTable_Load_TEC(config->GetLUTFileName());
+		LookUpTable_Load_TEC(config->GetLUTThermodynamicFileName());
 	} else {
 		if (rank == MASTER_NODE) {
 			cout << "No recognized LUT format found, exiting!" << endl;

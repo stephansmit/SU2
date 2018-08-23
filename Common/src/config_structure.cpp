@@ -627,8 +627,11 @@ void CConfig::SetConfig_Options(unsigned short val_iZone, unsigned short val_nZo
   /* DESCRIPTION: Critical Density, default value for MDM */
    addDoubleOption("ACENTRIC_FACTOR", Acentric_Factor, 0.035);
 
-   /* DESCRIPTION: Look Up Table filename, used by both fluid and transport models.*/
-   addStringOption("LUT_FILENAME", LUT_FileName, string("LUT"));
+   /* DESCRIPTION: Look Up Table filename, used by fluid models.*/
+   addStringOption("LUT_THERMODYNAMIC_FILENAME", LUT_Thermodynamic_FileName, string("LUT_THERMODYNAMIC"));
+
+   /* DESCRIPTION: Look Up Table filename, used by transport models.*/
+   addStringOption("LUT_TRANSPORT_FILENAME", LUT_Transport_FileName, string("LUT_TRANSPORT"));
 
    /* DESCRIPTION: Debug mode for the LookUpTable fluid model, i.e. enable printing of errors*/
    addBoolOption("LUT_DEBUG_MODE", LUT_Debug_Mode, true);

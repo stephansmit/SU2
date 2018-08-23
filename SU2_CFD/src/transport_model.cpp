@@ -118,18 +118,18 @@ CLookUpTable_Viscosity::CLookUpTable_Viscosity(CConfig *config, bool dimensional
 	}
 	skewed_linear_table = false;
 	//Detect cfx filetype
-	if ((config->GetLUTFileName()).find(".rgp") != string::npos) {
+	if ((config->GetLUTTransportFileName()).find(".rgp") != string::npos) {
 		if (rank == MASTER_NODE) {
 			cout << "CFX type LUT Viscosity found" << endl;
 		}
-		LookUpTable_Load_CFX(config->GetLUTFileName());
+		LookUpTable_Load_CFX(config->GetLUTTransportFileName());
 	}
 	//Detect dat file type
-	else if ((config->GetLUTFileName()).find(".dat") != string::npos) {
+	else if ((config->GetLUTTransportFileName()).find(".dat") != string::npos) {
 		if (rank == MASTER_NODE) {
 			cout << "DAT type LUT Viscosity found" << endl;
 		}
-		LookUpTable_Load_DAT(config->GetLUTFileName());
+		LookUpTable_Load_DAT(config->GetLUTTransportFileName());
 	} else {
 		if (rank == MASTER_NODE) {
 			cout << "No recognized LUT Viscosity format found, exiting!" << endl;
@@ -927,18 +927,18 @@ CLookUpTable_Conductivity::CLookUpTable_Conductivity(CConfig *config, bool dimen
 
 	skewed_linear_table = false;
 	//Detect cfx filetype
-	if ((config->GetLUTFileName()).find(".rgp") != string::npos) {
+	if ((config->GetLUTTransportFileName()).find(".rgp") != string::npos) {
 		if (rank == MASTER_NODE) {
 			cout << "CFX type LUT Conductivity found" << endl;
 		}
-		LookUpTable_Load_CFX(config->GetLUTFileName());
+		LookUpTable_Load_CFX(config->GetLUTTransportFileName());
 	}
 	//Detect dat file type
-	else if ((config->GetLUTFileName()).find(".dat") != string::npos) {
+	else if ((config->GetLUTTransportFileName()).find(".dat") != string::npos) {
 		if (rank == MASTER_NODE) {
 			cout << "DAT type LUT Conductivity found" << endl;
 		}
-		LookUpTable_Load_DAT(config->GetLUTFileName());
+		LookUpTable_Load_DAT(config->GetLUTTransportFileName());
 	} else {
 		if (rank == MASTER_NODE) {
 			cout << "No recognized LUT Conductivity format found, exiting!" << endl;
