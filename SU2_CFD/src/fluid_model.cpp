@@ -32,6 +32,7 @@
  */
 
 #include "../include/fluid_model.hpp"
+
 CFluidModel::CFluidModel(void) {
 
   /*--- Attributes initialization ---*/
@@ -47,19 +48,19 @@ CFluidModel::CFluidModel(void) {
   dTdrho_e = 0.0;
   dTde_rho = 0.0;
   Cp       = 0.0;
+
   LaminarViscosity = NULL;
   ThermalConductivity = NULL;
-  LookUpTable = NULL;
 
 }
 
 CFluidModel::~CFluidModel(void) {
   if (LaminarViscosity!= NULL) delete LaminarViscosity;
   if (ThermalConductivity!= NULL) delete ThermalConductivity;
-  if (LookUpTable!= NULL) delete LookUpTable;
 }
 
 void CFluidModel::SetLaminarViscosityModel (CConfig *config) {
+  
   switch (config->GetKind_ViscosityModel()) {
   case CONSTANT_VISCOSITY:
     LaminarViscosity = new CConstantViscosity(config->GetMu_ConstantND());
@@ -67,16 +68,11 @@ void CFluidModel::SetLaminarViscosityModel (CConfig *config) {
   case SUTHERLAND:
     LaminarViscosity = new CSutherland(config->GetMu_RefND(), config->GetMu_Temperature_RefND(), config->GetMu_SND());
     break;
-  case TOLUENE_VISCOSITY:
-    LaminarViscosity = new CViscosityToluene();
-    break;
   case LUT_VISCOSITY:
-	LaminarViscosity = new CViscosityLUT(LookUpTable);
+	LaminarViscosity = new CLookUpTable_Viscosity(config, config->GetBoolDimensionalLUTViscosity());
 	break;
-  case CP_VISCOSITY:
-  	LaminarViscosity = new CViscosityCP(config->GetTable_Fluid());
-  	break;
-  }
+
+    }
 }
 
 void CFluidModel::SetThermalConductivityModel (CConfig *config) {
@@ -87,31 +83,11 @@ void CFluidModel::SetThermalConductivityModel (CConfig *config) {
   case CONSTANT_PRANDTL:
     ThermalConductivity = new CConstantPrandtl(config->GetPrandtl_Lam());
     break;
-  case TOLUENE_CONDUCTIVITY:
-    ThermalConductivity = new CConductivityToluene();
-    break;
   case LUT_CONDUCTIVITY:
-	ThermalConductivity = new CConductivityLUT(LookUpTable);
-	break;
-  case CP_CONDUCTIVITY:
- 	ThermalConductivity = new CConductivityCP(config->GetTable_Fluid());
- 	break;
+		ThermalConductivity = new CLookUpTable_Conductivity(config, config->GetBoolDimensionalLUTConductivity());
+  break;
+
   }
-
+  
 }
 
-
-
-void CFluidModel::SetThermalConductivityModelDirect(CConductivityModel *ConductivityModel) {
-  ThermalConductivity = ConductivityModel;
-}
-
-void CFluidModel::SetLaminarViscosityModelDirect(CViscosityModel *ViscosityModel) {
-	LaminarViscosity = ViscosityModel;
-}
-
-void CFluidModel::SetTransportModelsLUTDirect() {
-	LaminarViscosity = new CViscosityLUT(LookUpTable);
-	ThermalConductivity= new CConductivityLUT(LookUpTable);
-
-}

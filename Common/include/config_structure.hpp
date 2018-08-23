@@ -651,6 +651,7 @@ private:
   AdjWave_FileName,					/*!< \brief Adjoint wave variables output file. */
   Residual_FileName,				/*!< \brief Residual variables output file. */
   Conv_FileName,					/*!< \brief Convergence history output file. */
+  LUT_FileName, /*!< \brief Look up table file name. */
   Breakdown_FileName,			    /*!< \brief Breakdown output file. */
   Conv_FileName_FSI,					/*!< \brief Convergence history output file. */
   Restart_FlowFileName,			/*!< \brief Restart file for flow variables. */
@@ -675,7 +676,8 @@ private:
   Wrt_Limiters,              /*!< \brief Write residuals to solution file */
   Wrt_SharpEdges,              /*!< \brief Write residuals to solution file */
   Wrt_Halo,                   /*!< \brief Write rind layers in solution files */
-  Plot_Section_Forces;       /*!< \brief Write sectional forces for specified markers. */
+  Plot_Section_Forces,       /*!< \brief Write sectional forces for specified markers. */
+  LUT_Debug_Mode; /*!< \brief Prints errors related to points being thermodynamically outside the table. */
   unsigned short Console_Output_Verb,  /*!< \brief Level of verbosity for console output */
   Kind_Average;        /*!< \brief Particular average for the marker analyze. */
   su2double Gamma,			/*!< \brief Ratio of specific heats of the gas. */
@@ -847,25 +849,12 @@ private:
   unsigned short Kind_Interpolation; /*!\brief type of interpolation to use for FSI applications. */
   bool Prestretch;            /*!< Read a reference geometry for optimization purposes. */
   string Prestretch_FEMFileName;         /*!< \brief File name for reference geometry. */
-  string Table_Name;   			/*!< \brief File name for Table for LUT model.  */
-  string Table_Fluid;   		/*!< \brief Fluid name for Table for LUT model.  */
-  unsigned short  Table_InterpolationScheme;   /*!< \brief Interpolation scheme for LUT model.  */
-  unsigned short  Table_Distribution;   	/*!< \brief Distribution of density column for LUT model.  */
-  unsigned short Table_IMax;	/*!< \brief Number of elements in density column for LUT model.  */
-  unsigned short Table_JMax;	/*!< \brief Number of elements in temperature column for LUT model.  */
-  bool CreateTable;	/*!< \brief Option to create table with Coolprop */
-
-  su2double Table_TMin;			/*!< \brief Minimum temperature value in table for LUT model.  */
-  su2double Table_TMax;			/*!< \brief Maximum temperature value in table for LUT model.  */
-  su2double Table_RhoMin;		/*!< \brief Minimum density value in table for LUT model.  */
-  su2double Table_RhoMax;		/*!< \brief Maximum density value in table for LUT model.  */
-
-
   unsigned long Nonphys_Points, /*!< \brief Current number of non-physical points in the solution. */
   Nonphys_Reconstr;           /*!< \brief Current number of non-physical reconstructions for 2nd-order upwinding. */
   bool ParMETIS;              /*!< \brief Boolean for activating ParMETIS mode (while testing). */
   unsigned short DirectDiff;  /*!< \brief Direct Differentation mode. */
   bool DiscreteAdjoint;       /*!< \brief AD-based discrete adjoint mode. */
+  bool BoolDimensionalLUTViscosity; /*!< \brief bool for dimensional LUT viscosity */
   su2double *default_vel_inf, /*!< \brief Default freestream velocity array for the COption class. */
   *default_eng_cyl,           /*!< \brief Default engine box array for the COption class. */
   *default_eng_val,           /*!< \brief Default engine box array values for the COption class. */
@@ -3080,34 +3069,6 @@ public:
    */
   su2double GetAcentric_Factor(void);
   
-  /*!
-    * \brief Get the value of the critical pressure.
-    * \return Critical pressure.
-    */
-  string GetTable_Name(void);
-
-
-  string GetTable_Fluid(void);
-
-  unsigned short GetTable_InterpolationScheme(void);
-
-  unsigned short GetTable_Distribution(void);
-
-  unsigned short GetTable_IMax(void);
-
-  unsigned short GetTable_JMax(void);
-
-  su2double GetTable_TMin(void);
-
-  su2double GetTable_TMax(void);
-
-  su2double GetTable_RhoMin(void);
-
-  su2double GetTable_RhoMax(void);
-
-  bool GetTable_CreateTable(void);
-
-
   /*!
    * \brief Get the value of the viscosity model.
    * \return Viscosity model.
@@ -7495,6 +7456,22 @@ public:
    * \brief Get the AD support.
    */
   bool GetAD_Mode(void);
+
+
+  // LUT options //
+
+  void SetBoolDimensionalLUTViscosity(bool bool_dim);
+
+  bool GetBoolDimensionalLUTViscosity(void);
+
+  void SetBoolDimensionalLUTConductivity(bool bool_dim);
+
+  bool GetBoolDimensionalLUTConductivity(void);
+
+
+  string GetLUTFileName(void);
+
+  bool GetLUT_Debug_Mode(void);
 };
 
 #include "config_structure.inl"

@@ -71,12 +71,6 @@ AC_CHECK_SIZEOF(void *)
 
 # optional bindings
 
-AC_ARG_WITH(CoolProp-lib,
-    AS_HELP_STRING([--with-CoolProp-lib[=ARG]], [CoolProp library directory, ARG = path to libcFPapi.a]),
-    [with_CoolProp_lib=$withval], [with_CoolProp_lib="no"])
-AC_ARG_WITH(CoolProp-include,
-    AS_HELP_STRING([--with-CoolProp-include[=ARG]], [CoolProp include directory, ARG = path to fluidprop.h]),
-    [with_CoolProp_include=$withval], [with_CoolProp_include="no"])
 AC_ARG_WITH(HDF5-lib,
 AS_HELP_STRING([--with-HDF5-lib[=ARG]], [HDF5 library directory, ARG = path to libhdf5.a]),
 [with_HDF5_lib=$withval], [with_HDF5_lib="no"])
@@ -522,49 +516,6 @@ then
 fi
 ###########################
 
-# check for lib
-CoolProplib=libcfpapi.so
-CoolPropheader=CoolProp.h
-have_CoolProp="no"
-
-if test "$with_CoolProp_lib" != "no"
-then
-AC_CHECK_FILE([$with_CoolProp_lib/$CoolProplib],[have_CoolProp="yes"],[have_CoolProp="no"])
-if test "$have_CoolProp" == "no"
-then
-AC_MSG_ERROR([CoolProp requested but library file $CoolProplib not found.])
-fi
-fi
-
-# check for header
-if test "$have_CoolProp" != "no"
-then
-if test "$with_CoolProp_include" != "no"
-then
-AC_CHECK_FILE([$with_CoolProp_include/$CoolPropheader],[have_CoolProp='yes'],[have_CoolProp='no'])
-if test "$have_CoolProp" == "no"
-then
-AC_MSG_ERROR([CoolProp requested but header file $CoolPropheader not found.])
-fi
-else
-have_CoolProp="no"
-fi
-fi
-
-if test "$have_CoolProp" != "no"
-then
-AM_CONDITIONAL(BUILD_CoolProp,true)
-CoolProp_CXX="-DHAVE_CoolProp -I"$with_CoolProp_include""
-CoolProp_LD="$with_CoolProp_lib"/$CoolProplib
-else
-AM_CONDITIONAL(BUILD_CoolProp,false)
-CoolProp_CXX=
-CoolProp_LD=
-fi
-AC_SUBST([CoolProp_CXX])
-AC_SUBST([CoolProp_LD])
-
-########################### MPI
 AM_CONDITIONAL([BUILD_CFD],[test $build_CFD != "no"])
 AM_CONDITIONAL([BUILD_DOT],[test $build_DOT != "no"])
 AM_CONDITIONAL([BUILD_MSH],[test $build_MSH != "no"])
@@ -649,7 +600,6 @@ Build Configuration Summary:
     ZLIB support:         $have_ZLIB
     Mutation++ support:   $have_Mutationpp
     Jsoncpp support: 	  $have_Jsoncpp
-    CoolProp support: 	  $have_CoolProp
     LAPACK support:       $have_LAPACK
     Datatype support:
         double              $build_NORMAL

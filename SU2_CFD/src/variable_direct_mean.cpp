@@ -616,7 +616,7 @@ bool CNSVariable::SetPrimVar(su2double eddy_visc, su2double turb_ke, CFluidModel
     staticEnergy = GetEnergy()-0.5*Velocity2 - turb_ke;
     
     /*--- Check will be moved inside fluid model plus error description strings ---*/
-    
+
     FluidModel->SetTDState_rhoe(density, staticEnergy);
     
     SetDensity();
@@ -625,7 +625,7 @@ bool CNSVariable::SetPrimVar(su2double eddy_visc, su2double turb_ke, CFluidModel
     SetTemperature(FluidModel->GetTemperature());
     
     RightVol = false;
-    
+
   }
   
   /*--- Set enthalpy ---*/

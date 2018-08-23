@@ -428,8 +428,7 @@ enum ENUM_FLUIDMODEL {
 	IDEAL_GAS = 1, /*!< \brief _____. */
 	VW_GAS = 2,
 	PR_GAS = 3,
-	LUT_GAS = 4,
-	CP_GAS = 5
+	LUT =4
 };
 
 static const map<string, ENUM_FLUIDMODEL> FluidModel_Map = CCreateMap<string, ENUM_FLUIDMODEL>
@@ -437,35 +436,7 @@ static const map<string, ENUM_FLUIDMODEL> FluidModel_Map = CCreateMap<string, EN
 ("IDEAL_GAS", IDEAL_GAS)
 ("VW_GAS", VW_GAS)
 ("PR_GAS", PR_GAS)
-("LUT_GAS", LUT_GAS)
-("CP_GAS", CP_GAS);
-
-
-/*!
- * \brief types of interpolation scheme of table
- */
-enum ENUM_TABLEINTERPOLATIONSCHEME {
-	BILINEAR = 0,
-	POLYNOMIAL = 1
-};
-
-static const map<string, ENUM_TABLEINTERPOLATIONSCHEME> TableInterpolationScheme_Map = CCreateMap<string, ENUM_TABLEINTERPOLATIONSCHEME>
-("BILINEAR", BILINEAR)
-("POLYNOMIAL", POLYNOMIAL);
-
-/*!
- * \brief types of distribution type of table
- */
-enum ENUM_TABLEDISTRIBUTION {
-	UNIFORM = 0,
-	LOGARITMIC = 1
-};
-
-static const map<string, ENUM_TABLEDISTRIBUTION> TableDistribution_Map = CCreateMap<string, ENUM_TABLEDISTRIBUTION>
-("UNIFORM", UNIFORM)
-("LOGARITMIC", LOGARITMIC);
-
-
+("LUT", LUT);
 
 /*!
  * \brief types of initialization option
@@ -501,20 +472,13 @@ static const map<string, ENUM_FREESTREAM_OPTION> FreeStreamOption_Map = CCreateM
 enum ENUM_VISCOSITYMODEL {
 	CONSTANT_VISCOSITY = 0, /*!< \brief _____. */
 	SUTHERLAND = 1,
-	TOLUENE_VISCOSITY = 2,
-	LUT_VISCOSITY = 3,
-	CP_VISCOSITY = 4
-
-
+	LUT_VISCOSITY
 };
 
 static const map<string, ENUM_VISCOSITYMODEL> ViscosityModel_Map = CCreateMap<string, ENUM_VISCOSITYMODEL>
 ("CONSTANT_VISCOSITY", CONSTANT_VISCOSITY)
 ("SUTHERLAND", SUTHERLAND)
-("TOLUENE_VISCOSITY", TOLUENE_VISCOSITY)
-("LUT_VISCOSITY", LUT_VISCOSITY)
-("CP_VISCOSITY", CP_VISCOSITY);
-
+("LUT_VISCOSITY", LUT_VISCOSITY);
 
 /*!
  * \brief types of thermal conductivity model
@@ -522,18 +486,13 @@ static const map<string, ENUM_VISCOSITYMODEL> ViscosityModel_Map = CCreateMap<st
 enum ENUM_CONDUCTIVITYMODEL {
 	CONSTANT_CONDUCTIVITY = 0, /*!< \brief _____. */
 	CONSTANT_PRANDTL = 1,
-	TOLUENE_CONDUCTIVITY = 2,
-	LUT_CONDUCTIVITY = 3,
-	CP_CONDUCTIVITY =4
+	LUT_CONDUCTIVITY
 };
 
 static const map<string, ENUM_CONDUCTIVITYMODEL> ConductivityModel_Map = CCreateMap<string, ENUM_CONDUCTIVITYMODEL>
 ("CONSTANT_CONDUCTIVITY", CONSTANT_CONDUCTIVITY)
 ("CONSTANT_PRANDTL", CONSTANT_PRANDTL)
-("TOLUENE_CONDUCTIVITY", TOLUENE_CONDUCTIVITY)
-("LUT_CONDUCTIVITY", LUT_CONDUCTIVITY)
-("CP_CONDUCTIVITY", CP_CONDUCTIVITY);
-
+("LUT_CONDUCTIVITY", LUT_CONDUCTIVITY);
 
 /*!
  * \brief types of unsteady mesh motion
@@ -658,8 +617,9 @@ enum ENUM_LIMITER {
   VENKATAKRISHNAN_WANG = 2,	/*!< \brief Slope limiter using Venkatakrisnan method, eps based on solution (stencil formulation). */
   BARTH_JESPERSEN      = 3, /*!< \brief Slope limiter using Barth-Jespersen method (stencil formulation). */
   VAN_ALBADA_EDGE      = 4, /*!< \brief Slope limiter using Van Albada method (edge formulation). */
-  SHARP_EDGES          = 5, /*!< \brief Slope limiter using sharp edges. */
-  WALL_DISTANCE        = 6  /*!< \brief Slope limiter using wall distance. */
+  MINMOD_EDGE          = 5, /*!< \brief Slope limiter using Van Albada method (edge formulation). */
+  SHARP_EDGES          = 6, /*!< \brief Slope limiter using sharp edges. */
+  WALL_DISTANCE        = 7  /*!< \brief Slope limiter using wall distance. */
 };
 static const map<string, ENUM_LIMITER> Limiter_Map = CCreateMap<string, ENUM_LIMITER>
 ("NONE", NO_LIMITER)
@@ -667,6 +627,7 @@ static const map<string, ENUM_LIMITER> Limiter_Map = CCreateMap<string, ENUM_LIM
 ("VENKATAKRISHNAN_WANG", VENKATAKRISHNAN_WANG)
 ("BARTH_JESPERSEN", BARTH_JESPERSEN)
 ("VAN_ALBADA_EDGE", VAN_ALBADA_EDGE)
+("MINMOD_EDGE", MINMOD_EDGE)
 ("SHARP_EDGES", SHARP_EDGES)
 ("WALL_DISTANCE", WALL_DISTANCE);
 

@@ -82,8 +82,3 @@ ___bin_SU2_SOL_LDADD += @MUTATIONPP_LD@
 ___bin_SU2_SOL_CXXFLAGS += @JSONCPP_CXX@
 ___bin_SU2_SOL_LDADD += @JSONCPP_LD@
 # endif
-
-# if BUILD_CoolProp
-___bin_SU2_SOL_CXXFLAGS += @CoolProp_CXX@
-___bin_SU2_SOL_LDADD += @CoolProp_LD@
-# endif

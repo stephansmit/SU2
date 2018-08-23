@@ -411,6 +411,15 @@ inline su2double CConfig::GetTemperature_Ref(void) { return Temperature_Ref; }
 
 inline su2double CConfig::GetDensity_Ref(void) { return Density_Ref; }
 
+inline void CConfig::SetBoolDimensionalLUTViscosity(bool bool_dim) { BoolDimensionalLUTViscosity = bool_dim; }
+
+inline bool CConfig::GetBoolDimensionalLUTViscosity(void) { return BoolDimensionalLUTViscosity; }
+
+inline void CConfig::SetBoolDimensionalLUTConductivity(bool bool_dim) { BoolDimensionalLUTViscosity = bool_dim; }
+
+inline bool CConfig::GetBoolDimensionalLUTConductivity(void) { return BoolDimensionalLUTViscosity; }
+
+
 inline su2double CConfig::GetVelocity_Ref(void) { return Velocity_Ref; }
 
 inline su2double CConfig::GetEnergy_Ref(void) { return Energy_Ref; }
@@ -677,6 +686,8 @@ inline unsigned long CConfig::GetWrt_Sol_Freq(void) { return Wrt_Sol_Freq; }
 
 inline unsigned long CConfig::GetWrt_Sol_Freq_DualTime(void) { return Wrt_Sol_Freq_DualTime; }
 
+inline bool CConfig::GetLUT_Debug_Mode(void) { return LUT_Debug_Mode; }
+
 inline unsigned long CConfig::GetWrt_Con_Freq(void) { return Wrt_Con_Freq; }
 
 inline unsigned long CConfig::GetWrt_Con_Freq_MultiZone(void) { return Wrt_Con_Freq_MultiZone; }
@@ -708,29 +719,7 @@ inline su2double CConfig::GetTemperature_Critical(void) { return Temperature_Cri
 
 inline su2double CConfig::GetAcentric_Factor(void) { return Acentric_Factor; }
 
-inline string CConfig::GetTable_Name(void) { return Table_Name; }
-
-inline string CConfig::GetTable_Fluid(void) { return Table_Fluid; }
-
-inline unsigned short CConfig::GetTable_InterpolationScheme(void) { return Table_InterpolationScheme; }
-
-inline unsigned short CConfig::GetTable_Distribution(void) { return Table_Distribution; }
-
-inline unsigned short CConfig::GetTable_IMax(void) { return Table_IMax; }
-
-inline unsigned short CConfig::GetTable_JMax(void) { return Table_JMax; }
-
-inline bool CConfig::GetTable_CreateTable(void) { return CreateTable; }
-
-
-
-inline su2double CConfig::GetTable_TMin(void) { return Table_TMin; }
-
-inline su2double CConfig::GetTable_TMax(void) { return Table_TMax; }
-
-inline su2double CConfig::GetTable_RhoMin(void) { return Table_RhoMin; }
-
-inline su2double CConfig::GetTable_RhoMax(void) { return Table_RhoMax; }
+inline string CConfig::GetLUTFileName(void){return LUT_FileName;}
 
 inline unsigned short CConfig::GetKind_ViscosityModel(void) { return Kind_ViscosityModel; }
 

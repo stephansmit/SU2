@@ -206,9 +206,11 @@ void CPengRobinson::SetTDState_PT (su2double P, su2double T ) {
 }
 
 void CPengRobinson::SetTDState_Prho (su2double P, su2double rho ) {
-  SetEnergy_Prho(P, rho);
+
+    SetEnergy_Prho(P, rho);
 
   SetTDState_rhoe(rho, StaticEnergy);
+
 }
 
 void CPengRobinson::SetTDState_hs (su2double h, su2double s ) {

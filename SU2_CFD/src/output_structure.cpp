@@ -33,6 +33,7 @@
 
 #include "../include/output_structure.hpp"
 
+
 COutput::COutput(CConfig *config) {
 
 	unsigned short iDim, iSpan, iMarker;
@@ -6571,9 +6572,7 @@ void COutput::SpecialOutput_ForcesBreakdown(CSolver ****solver, CGeometry ***geo
             Breakdown_file << "Ref. Temperature (non-dim): " << config[val_iZone]->GetMu_Temperature_RefND()<< "\n";
             Breakdown_file << "Sutherland constant (non-dim): "<< config[val_iZone]->GetMu_SND()<< "\n";
             break;
-          case TOLUENE_VISCOSITY:
-            Breakdown_file << "Viscosity Model: TOLUENE_VISCOSITY "<< "\n";
-            break;
+            
         }
         switch (config[val_iZone]->GetKind_ConductivityModel()) {
             
@@ -6587,9 +6586,7 @@ void COutput::SpecialOutput_ForcesBreakdown(CSolver ****solver, CGeometry ***geo
             Breakdown_file << "Molecular Conductivity: " << config[val_iZone]->GetKt_Constant()<< " W/m^2.K." << "\n";
             Breakdown_file << "Molecular Conductivity (non-dim): " << config[val_iZone]->GetKt_ConstantND()<< "\n";
             break;
-          case TOLUENE_CONDUCTIVITY:
-            Breakdown_file << "Conductivity Model: TOLUENE_CONDUCTIVITY  "<< "\n";
-            break;
+            
         }
       }
     }
@@ -11517,6 +11514,7 @@ void COutput::LoadLocalData_Flow(CConfig *config, CGeometry *geometry, CSolver *
 		}
     Variable_Names.push_back("Mach");
     
+
     /*--- Add Entropy, Total Pressure and Isentropic Mach Number---*/
     if(turbo){
       nVar_Par += 4;
@@ -11530,6 +11528,9 @@ void COutput::LoadLocalData_Flow(CConfig *config, CGeometry *geometry, CSolver *
     if ((Kind_Solver == NAVIER_STOKES) || (Kind_Solver == RANS)) {
 			if (config->GetOutput_FileFormat() == PARAVIEW){
 				nVar_Par += 1; Variable_Names.push_back("Laminar_Viscosity");
+				nVar_Par += 1; Variable_Names.push_back("Thermal_Conductivity");
+				nVar_Par += 1; Variable_Names.push_back("Heat_Capacity");
+
 				nVar_Par += 2;
 				Variable_Names.push_back("Skin_Friction_Coefficient_X");
 				Variable_Names.push_back("Skin_Friction_Coefficient_Y");
@@ -11541,6 +11542,9 @@ void COutput::LoadLocalData_Flow(CConfig *config, CGeometry *geometry, CSolver *
 				Variable_Names.push_back("Y_Plus");
 			} else {
 				nVar_Par += 1; Variable_Names.push_back("<greek>m</greek>");
+				nVar_Par += 1; Variable_Names.push_back("<greek>l</greek><sub>t</sub>");
+				nVar_Par += 1; Variable_Names.push_back("Heat Capacity");
+
 				nVar_Par += 2;
 				Variable_Names.push_back("C<sub>f</sub>_x");
 				Variable_Names.push_back("C<sub>f</sub>_y");
@@ -11553,8 +11557,8 @@ void COutput::LoadLocalData_Flow(CConfig *config, CGeometry *geometry, CSolver *
 			}
     }
     
-    /*--- Add Eddy Viscosity. ---*/
-    
+
+	/*--- Add Eddy Viscosity. ---*/
     if (Kind_Solver == RANS) {
       nVar_Par += 1;
 			if (config->GetOutput_FileFormat() == PARAVIEW){
@@ -11769,7 +11773,8 @@ void COutput::LoadLocalData_Flow(CConfig *config, CGeometry *geometry, CSolver *
           Local_Data[jPoint][iVar] = sqrt(solver[FLOW_SOL]->node[iPoint]->GetVelocity2())*config->GetVelocity_Ref()/
           sqrt(config->GetBulk_Modulus()/(solver[FLOW_SOL]->node[iPoint]->GetDensity()*config->GetDensity_Ref())); iVar++;
         }
-        
+
+
         /*--- Compute and store the derived quantities of entropy, total-pressure and isentropic Mach.---*/
         if(turbo){
           Pressure       = solver[FLOW_SOL]->node[iPoint]->GetPressure();
@@ -11807,7 +11812,9 @@ void COutput::LoadLocalData_Flow(CConfig *config, CGeometry *geometry, CSolver *
           /*--- Load data for the laminar viscosity. ---*/
           
           Local_Data[jPoint][iVar] = solver[FLOW_SOL]->node[iPoint]->GetLaminarViscosity(); iVar++;
-          
+          Local_Data[jPoint][iVar] = solver[FLOW_SOL]->node[iPoint]->GetThermalConductivity(); iVar++;
+          Local_Data[jPoint][iVar] = solver[FLOW_SOL]->node[iPoint]->GetSpecificHeatCp(); iVar++;
+
           /*--- Load data for the skin friction, heat flux, and y-plus. ---*/
           
           Local_Data[jPoint][iVar] = Aux_Frict_x[iPoint]; iVar++;
@@ -11821,10 +11828,11 @@ void COutput::LoadLocalData_Flow(CConfig *config, CGeometry *geometry, CSolver *
           
         }
         
+
         /*--- Load data for the Eddy viscosity for RANS. ---*/
-        
         if (Kind_Solver == RANS) {
           Local_Data[jPoint][iVar] = solver[FLOW_SOL]->node[iPoint]->GetEddyViscosity(); iVar++;
+
         }
         
         /*--- Load data for the distance to the nearest sharp edge. ---*/
@@ -16460,9 +16468,9 @@ void COutput::SpecialOutput_AnalyzeSurface(CSolver *solver, CGeometry *geometry,
           Surface_MassFlow_Local[iMarker_Analyze]         += Surface_MassFlow[iMarker];
           Surface_Mach_Local[iMarker_Analyze]             += Surface_Mach[iMarker];
           Surface_Temperature_Local[iMarker_Analyze]      += Surface_Temperature[iMarker];
-          Surface_Density_Local[iMarker_Analyze]          += Surface_Density[iMarker];
-          Surface_Enthalpy_Local[iMarker_Analyze]          += Surface_Enthalpy[iMarker];
-          Surface_NormalVelocity_Local[iMarker_Analyze]   += Surface_NormalVelocity[iMarker];
+          Surface_Density_Local[iMarker_Analyze]          += Surface_Temperature[iMarker];
+          Surface_Enthalpy_Local[iMarker_Analyze]          += Surface_Temperature[iMarker];
+          Surface_NormalVelocity_Local[iMarker_Analyze]   += Surface_Temperature[iMarker];
           Surface_Pressure_Local[iMarker_Analyze]         += Surface_Pressure[iMarker];
           Surface_TotalTemperature_Local[iMarker_Analyze] += Surface_TotalTemperature[iMarker];
           Surface_TotalPressure_Local[iMarker_Analyze]    += Surface_TotalPressure[iMarker];

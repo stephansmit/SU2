@@ -50,7 +50,7 @@ using namespace std;
 
 #include "../include/transport_model.hpp"
 #include "../../Common/include/config_structure.hpp"
-#include "../include/look_up_table.hpp"
+
 
 /*!
  * \class CFluidModel
@@ -61,33 +61,30 @@ using namespace std;
  */
 class CFluidModel {
 protected:
-su2double
-	   StaticEnergy,    /*!< \brief Internal Energy. */
-       Entropy,         /*!< \brief Entropy. */
-       Density,         /*!< \brief Density. */
-       Pressure,        /*!< \brief Pressure. */
-       SoundSpeed2,     /*!< \brief SpeedSound. */
-       Temperature,     /*!< \brief Temperature. */
-       dPdrho_e,        /*!< \brief DpDd_e. */
-       dPde_rho,        /*!< \brief DpDe_d. */
-       dTdrho_e,        /*!< \brief DTDd_e. */
-       dTde_rho,        /*!< \brief DTDe_d. */
-       dhdrho_P,	 	/*!< \brief DhDrho_p. */
-       dhdP_rho,		/*!< \brief DhDp_rho. */
-       dsdrho_P,		/*!< \brief DsDrho_p. */
-       dsdP_rho,		/*!< \brief DsDp_rho. */
-       Cp,              /*!< \brief Specific Heat Capacity at constant pressure. */
-       Mu,          	/*!< \brief Specific Heat Capacity at constant pressure. */
+su2double      StaticEnergy,      /*!< \brief Internal Energy. */
+       Entropy,          /*!< \brief Entropy. */
+       Density,          /*!< \brief Density. */
+       Pressure,         /*!< \brief Pressure. */
+       SoundSpeed2,       /*!< \brief SpeedSound. */
+       Temperature,      /*!< \brief Temperature. */
+       dPdrho_e,         /*!< \brief DpDd_e. */
+       dPde_rho,         /*!< \brief DpDe_d. */
+       dTdrho_e,         /*!< \brief DTDd_e. */
+       dTde_rho,         /*!< \brief DTDe_d. */
+       dhdrho_P,	 /*!< \brief DhDrho_p. */
+       dhdP_rho,	/*!< \brief DhDp_rho. */
+       dsdrho_P,	/*!< \brief DsDrho_p. */
+       dsdP_rho,	/*!< \brief DsDp_rho. */
+       Cp,                    /*!< \brief Specific Heat Capacity at constant pressure. */
+       Mu,          /*!< \brief Specific Heat Capacity at constant pressure. */
        dmudrho_T,       /*!< \brief Specific Heat Capacity at constant pressure. */
-       dmudT_rho,       /*!< \brief Specific Heat Capacity at constant pressure. */
-       Kt,          	/*!< \brief Specific Heat Capacity at constant pressure. */
+       dmudT_rho,        /*!< \brief Specific Heat Capacity at constant pressure. */
+       Kt,          /*!< \brief Specific Heat Capacity at constant pressure. */
        dktdrho_T,       /*!< \brief Specific Heat Capacity at constant pressure. */
-       dktdT_rho;       /*!< \brief Specific Heat Capacity at constant pressure. */
+       dktdT_rho;        /*!< \brief Specific Heat Capacity at constant pressure. */
 
-CViscosityModel *LaminarViscosity;      /*!< \brief Laminar Viscosity Model */
-CConductivityModel *ThermalConductivity;/*!< \brief Thermal Conductivity Model */
-CLookUpTable *LookUpTable; 				/*!< \brief Look Up Table */
-
+CViscosityModel *LaminarViscosity;            /*!< \brief Laminar Viscosity Model */
+CConductivityModel *ThermalConductivity;    /*!< \brief Thermal Conductivity Model */
 
 public:
 
@@ -219,8 +216,7 @@ public:
 		void SetLaminarViscosityModel (CConfig *config);
 
 		/*!
-		 * \brief Se    FluidModelPR->Se
-		 * t thermal conductivity model.
+		 * \brief Set thermal conductivity model.
 		 */
 		void SetThermalConductivityModel (CConfig *config);
 
@@ -276,7 +272,6 @@ public:
 		 * \param[in] InputSpec - Input pair for FLP calls ("rhoT").
 		 * \param[in] th1 - first thermodynamic variable (rho).
 		 * \param[in] th2 - second thermodynamic variable (T).
-		 *		void CopyStateLUT();
 		 *
 		 */
 		virtual void SetTDState_rhoT (su2double rho, su2double T );
@@ -301,12 +296,6 @@ public:
 		 */
 		virtual void ComputeDerivativeNRBC_Prho (su2double P, su2double rho );
 
-
-		void SetLaminarViscosityModelDirect(CViscosityModel *ViscosityModel);
-
-		void SetThermalConductivityModelDirect(CConductivityModel *ConductivityModel );
-
-		void SetTransportModelsLUTDirect();
 };
 
 
@@ -319,10 +308,9 @@ public:
 class CIdealGas : public CFluidModel {
 
 protected:
-  su2double
-  	  	  Gamma,             /*!< \brief Heat Capacity Ratio. */
-          Gamma_Minus_One,   /*!< \brief Heat Capacity Ratio Minus One. */
-          Gas_Constant;      /*!< \brief Gas Constant. */
+  su2double Gamma,             /*!< \brief Heat Capacity Ratio. */
+          Gamma_Minus_One,       /*!< \brief Heat Capacity Ratio Minus One. */
+          Gas_Constant;        /*!< \brief Gas Constant. */
 
 
 public:
@@ -412,219 +400,6 @@ public:
 
 
 /*!
- * \class CIdealGas
- * \brief Child class for defining ideal gas model.
- * \author: S.Vitale, M.Pini.
- * \version 5.0.0 "Raven"
- */
-class CLUTFluidModel : public CFluidModel {
-
-protected:
-  su2double Gamma,             /*!< \brief Heat Capacity Ratio. */
-          Gamma_Minus_One,       /*!< \brief Heat Capacity Ratio Minus One. */
-          Gas_Constant;        /*!< \brief Gas Constant. */
-
-	void CopyStateLUT();
-
-public:
-
-	   /*!
-		 * \brief Constructor of the class.
-		 */
-  	     CLUTFluidModel(void);
-
-		/*!
-		 * \brief Constructor of the class.
-		 */
-  	   CLUTFluidModel(string table_name,
-  	   							   string fluid,
-  	   							   string tab_dist,
-  	   							   int table_imax,
-  	   							   int table_jmax,
-  	   							   double rho_min,
-  	   							   double rho_max,
-  	   							   double T_min,
-  	   							   double T_max,
-  	   							   string interpolation_scheme,
-  	   							   bool createTable);
-
-		/*!
-		 * \brief Constructor of the class.
-		 */
- 	   CLUTFluidModel(CConfig *config) ;
-
-
-
-		/*!
-		 * \brief Destructor of the class.
-		 */
-		virtual ~CLUTFluidModel(void);
-
-		/*!
-		 * \brief Set the Dimensionless State using Density and Internal Energy
-		 * \param[in] rho - first thermodynamic variable.
-		 * \param[in] e - second thermodynamic variable.
-		 */
-
-		void SetTDState_rhoe (su2double rho, su2double e );
-
-		/*!
-		 * \brief Set the Dimensionless State using Pressure  and Temperature
-		 * \param[in] P - first thermodynamic variable.
-		 * \param[in] T - second thermodynamic variable.
-		 */
-
-		void SetTDState_PT (su2double P, su2double T );
-
-		/*!
-		 * \brief Set the Dimensionless State using Pressure and Density
-		 * \param[in] P - first thermodynamic variable.
-		 * \param[in] rho - second thermodynamic variable.
-		 */
-
-		void SetTDState_Prho (su2double P, su2double rho );
-
-		/*!
-		 * \brief Set the Dimensionless Internal Energy using Pressure and Density
-		 * \param[in] P - first thermodynamic variable.
-		 * \param[in] rho - second thermodynamic variable.
-		 */
-
-		void SetEnergy_Prho (su2double P, su2double rho );
-
-		/*!
-		 * \brief Set the Dimensionless State using Enthalpy and Entropy
-		 * \param[in] th1 - first thermodynamic variable (h).
-		 * \param[in] th2 - second thermodynamic variable (s).
-		 *
-		 */
-		void SetTDState_hs (su2double h, su2double s );
-
-
-		/*!
-		 * \brief Set the Dimensionless State using Density and Temperature
-		 * \param[in] th1 - first thermodynamic variable (rho).
-		 * \param[in] th2 - second thermodynamic variable (T).
-		 *
-		 */
-		void SetTDState_rhoT (su2double rho, su2double T );
-
-		/*!
-		 * \brief Set the Dimensionless State using Pressure and Entropy
-		 * \param[in] th1 - first thermodynamic variable (P).
-		 * \param[in] th2 - second thermodynamic variable (s).
-		 */
-
-		void SetTDState_Ps (su2double P, su2double s );
-
-		/*!
-		 * \brief compute some derivatives of enthalpy and entropy needed for subsonic inflow BC
-		 * \param[in] InputSpec - Input pair for FLP calls ("Pv").
-		 * \param[in] th1 - first thermodynamic variable (P).
-		 * \param[in] th2 - second thermodynamic variable (v).
-		 *
-		 */
-		void ComputeDerivativeNRBC_Prho (su2double P, su2double rho );
-};
-
-class CCPFluidModel : public CFluidModel {
-
-protected:
-  su2double Gamma,             /*!< \brief Heat Capacity Ratio. */
-          Gamma_Minus_One,       /*!< \brief Heat Capacity Ratio Minus One. */
-          Gas_Constant;        /*!< \brief Gas Constant. */
-
-  string FluidName;
-public:
-
-	   /*!
-		 * \brief Constructor of the class.
-		 */
-  	  	  CCPFluidModel(void);
-
-		/*!
-		 * \brief Constructor of the class.
-		 */
-  	  	  CCPFluidModel(string fluid_name);
-
-		/*!
-		 * \brief Constructor of the class.
-		 */
-
-
-
-		/*!
-		 * \brief Destructor of the class.
-		 */
-		virtual ~CCPFluidModel(void);
-
-		/*!
-		 * \brief Set the Dimensionless State using Density and Internal Energy
-		 * \param[in] rho - first thermodynamic variable.
-		 * \param[in] e - second thermodynamic variable.
-		 */
-
-		void SetTDState_rhoe (su2double rho, su2double e );
-
-		/*!
-		 * \brief Set the Dimensionless State using Pressure  and Temperature
-		 * \param[in] P - first thermodynamic variable.
-		 * \param[in] T - second thermodynamic variable.
-		 */
-
-		void SetTDState_PT (su2double P, su2double T );
-
-		/*!
-		 * \brief Set the Dimensionless State using Pressure and Density
-		 * \param[in] P - first thermodynamic variable.
-		 * \param[in] rho - second thermodynamic variable.
-		 */
-
-		void SetTDState_Prho (su2double P, su2double rho );
-
-		/*!
-		 * \brief Set the Dimensionless Internal Energy using Pressure and Density
-		 * \param[in] P - first thermodynamic variable.
-		 * \param[in] rho - second thermodynamic variable.
-		 */
-
-		void SetEnergy_Prho (su2double P, su2double rho );
-
-		/*!
-		 * \brief Set the Dimensionless State using Enthalpy and Entropy
-		 * \param[in] th1 - first thermodynamic variable (h).
-		 * \param[in] th2 - second thermodynamic variable (s).
-		 *
-		 */
-		void SetTDState_hs (su2double h, su2double s );
-
-
-		/*!
-		 * \brief Set the Dimensionless State using Density and Temperature
-		 * \param[in] th1 - first thermodynamic variable (rho).
-		 * \param[in] th2 - second thermodynamic variable (T).
-		 *
-		 */
-		void SetTDState_rhoT (su2double rho, su2double T );
-
-		/*!
-		 * \brief Set the Dimensionless State using Pressure and Entropy
-		 * \param[in] th1 - first thermodynamic variable (P).
-		 * \param[in] th2 - second thermodynamic variable (s).
-		 */
-
-		void SetTDState_Ps (su2double P, su2double s );
-
-		/*!
-		 * \brief compute some derivatives of enthalpy and entropy needed for subsonic inflow BC
-		 * \param[in] InputSpec - Input pair for FLP calls ("Pv").
-		 * \param[in] th1 - first thermodynamic variable (P).
-		 * \param[in] th2 - second thermodynamic variable (v).
-		 *
-		 */
-		void ComputeDerivativeNRBC_Prho (su2double P, su2double rho );
-};
-/*!
  * derived class CVanDerWaalsGas
  * \brief Child class for defining the Van der Waals model.
  * \author: S.Vitale, M.Pini
@@ -674,7 +449,6 @@ public:
      * \param[in] rho - second thermodynamic variable.
      */
     void SetTDState_Prho (su2double P, su2double rho );
-	void CopyStateLUT();
 
     /*!
      * \brief Set the Dimensionless Internal Energy using Pressure and Density
