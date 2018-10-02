@@ -295,9 +295,7 @@ CLookUpTable::CLookUpTable(CConfig *config, bool dimensional) :
 																																			<< endl;
 		cout << "Number of triangles in zone 1: " << nTable_Zone_Triangles[1]
 																																			 << endl;
-		cout
-		<< "Detecting all unique edges and setting edge to face connectivity..."
-		<< endl;
+		cout<< "Detecting all unique edges and setting edge to face connectivity..."<< endl;
 	}
 	Get_Unique_Edges();
 	if (rank == MASTER_NODE) {
