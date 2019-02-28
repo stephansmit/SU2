@@ -136,6 +136,8 @@ COutput::COutput(CConfig *config) {
     TotalEnthalpyIn_BC            = new su2double*[nMarkerTurboPerf];
     EntropyIn                     = new su2double*[nMarkerTurboPerf];
     EntropyOut                    = new su2double*[nMarkerTurboPerf];
+    SoundSpeedIn                  = new su2double*[nMarkerTurboPerf];
+    SoundSpeedOut                 = new su2double*[nMarkerTurboPerf];
     EntropyIn_BC                  = new su2double*[nMarkerTurboPerf];
     PressureRatio                 = new su2double*[nMarkerTurboPerf];
     TotalTemperatureIn            = new su2double*[nMarkerTurboPerf];
@@ -144,9 +146,11 @@ COutput::COutput(CConfig *config) {
     MachOut                       = new su2double**[nMarkerTurboPerf];
     VelocityOutIs                 = new su2double*[nMarkerTurboPerf];
     DensityIn                     = new su2double*[nMarkerTurboPerf];
+    TotalDensityIn                = new su2double*[nMarkerTurboPerf];
     PressureIn                    = new su2double*[nMarkerTurboPerf];
     TurboVelocityIn               = new su2double**[nMarkerTurboPerf];
     DensityOut                    = new su2double*[nMarkerTurboPerf];
+    TotalDensityOut               = new su2double*[nMarkerTurboPerf];
     PressureOut                   = new su2double*[nMarkerTurboPerf];
     TurboVelocityOut              = new su2double**[nMarkerTurboPerf];
     EnthalpyOutIs                 = new su2double*[nMarkerTurboPerf];
@@ -187,6 +191,8 @@ COutput::COutput(CConfig *config) {
       TotalEnthalpyIn_BC      [iMarker] = new su2double [nSpanWiseSections + 1];
       EntropyIn               [iMarker] = new su2double [nSpanWiseSections + 1];
       EntropyOut              [iMarker] = new su2double [nSpanWiseSections + 1];
+      SoundSpeedIn            [iMarker] = new su2double [nSpanWiseSections + 1];
+      SoundSpeedOut           [iMarker] = new su2double [nSpanWiseSections + 1];
       EntropyIn_BC            [iMarker] = new su2double [nSpanWiseSections + 1];
       PressureRatio           [iMarker] = new su2double [nSpanWiseSections + 1];
       TotalTemperatureIn      [iMarker] = new su2double [nSpanWiseSections + 1];
@@ -195,9 +201,11 @@ COutput::COutput(CConfig *config) {
       MachOut                 [iMarker] = new su2double*[nSpanWiseSections + 1];
       VelocityOutIs           [iMarker] = new su2double [nSpanWiseSections + 1];
       DensityIn               [iMarker] = new su2double [nSpanWiseSections + 1];
+      TotalDensityIn          [iMarker] = new su2double [nSpanWiseSections + 1];
       PressureIn              [iMarker] = new su2double [nSpanWiseSections + 1];
       TurboVelocityIn         [iMarker] = new su2double*[nSpanWiseSections + 1];
       DensityOut              [iMarker] = new su2double [nSpanWiseSections + 1];
+      TotalDensityOut         [iMarker] = new su2double [nSpanWiseSections + 1];
       PressureOut             [iMarker] = new su2double [nSpanWiseSections + 1];
       TurboVelocityOut        [iMarker] = new su2double*[nSpanWiseSections + 1];
       EnthalpyOutIs           [iMarker] = new su2double [nSpanWiseSections + 1];
@@ -239,6 +247,8 @@ COutput::COutput(CConfig *config) {
         TotalEnthalpyIn_BC      [iMarker][iSpan] = 0.0;
         EntropyIn               [iMarker][iSpan] = 0.0;
         EntropyOut              [iMarker][iSpan] = 0.0;
+        SoundSpeedIn            [iMarker][iSpan] = 0.0;
+        SoundSpeedOut           [iMarker][iSpan] = 0.0;
         EntropyIn_BC            [iMarker][iSpan] = 0.0;
         PressureRatio           [iMarker][iSpan] = 0.0;
         TotalTemperatureIn      [iMarker][iSpan] = 0.0;
@@ -247,11 +257,11 @@ COutput::COutput(CConfig *config) {
 
         VelocityOutIs           [iMarker][iSpan] = 0.0;
         DensityIn               [iMarker][iSpan] = 0.0;
+        TotalDensityIn          [iMarker][iSpan] = 0.0;
         PressureIn              [iMarker][iSpan] = 0.0;
-
         DensityOut              [iMarker][iSpan] = 0.0;
+        TotalDensityOut         [iMarker][iSpan] = 0.0;
         PressureOut             [iMarker][iSpan] = 0.0;
-
         EnthalpyOutIs           [iMarker][iSpan] = 0.0;
         EntropyGen              [iMarker][iSpan] = 0.0;
         AbsFlowAngleIn          [iMarker][iSpan] = 0.0;
@@ -10706,7 +10716,9 @@ void COutput::SpecialOutput_Turbo(CSolver ****solver, CGeometry ***geometry, CCo
     myfile.width(30); myfile << "\"Enthalpy [J]\"";
     myfile.width(30); myfile << "\"Total Enthalpy [J]\"";
     myfile.width(30); myfile << "\"Density [kg/m3]\"";
+    myfile.width(30); myfile << "\"Total Density [kg/m3]\"";
     myfile.width(30); myfile << "\"Entropy [J/K]\"";
+    myfile.width(30); myfile << "\"Sound Speed [m/s]\"";
     myfile.width(30); myfile << "\"TurbIntensity [-]\"";
     myfile.width(30); myfile << "\"Turb2LamViscRatio [-]\"";
     myfile.width(30); myfile << "\"NuFactor [-]\"";
@@ -10724,7 +10736,10 @@ void COutput::SpecialOutput_Turbo(CSolver ****solver, CGeometry ***geometry, CCo
       myfile.width(30); myfile << EnthalpyIn           [val_iZone][iSpan]*config[ZONE_0]->GetEnergy_Ref();
       myfile.width(30); myfile << TotalEnthalpyIn      [val_iZone][iSpan]*config[ZONE_0]->GetEnergy_Ref();
       myfile.width(30); myfile << DensityIn            [val_iZone][iSpan]*config[ZONE_0]->GetDensity_Ref();
+      myfile.width(30); myfile << TotalDensityIn       [val_iZone][iSpan]*config[ZONE_0]->GetDensity_Ref();
       myfile.width(30); myfile << EntropyIn            [val_iZone][iSpan]*config[ZONE_0]->GetEnergy_Ref()/config[ZONE_0]->GetTemperature_Ref();
+      myfile.width(30); myfile << SoundSpeedIn         [val_iZone][iSpan];
+
       if(TurbIntensityIn[val_iZone][iSpan] > 1.0){
         myfile.width(30); myfile << TurbIntensityIn      [val_iZone][config[ZONE_0]->GetnSpan_iZones(val_iZone)/2];
       }else{
@@ -10763,7 +10778,9 @@ void COutput::SpecialOutput_Turbo(CSolver ****solver, CGeometry ***geometry, CCo
     myfile.width(30); myfile << "\"Enthalpy [J]\"";
     myfile.width(30); myfile << "\"Total Enthalpy [J]\"";
     myfile.width(30); myfile << "\"Density [kg/m3]\"";
+    myfile.width(30); myfile << "\"Total Density [kg/m3]\"";
     myfile.width(30); myfile << "\"Entropy [J/K]\"";
+    myfile.width(30); myfile << "\"Sound Speed [m/s]\"";
     myfile.width(30); myfile << "\"TurbIntensity [-]\"";
     myfile.width(30); myfile << "\"Turb2LamViscRatio [-]\"";
     myfile.width(30); myfile << "\"NuFactor [-]\"";
@@ -10782,7 +10799,10 @@ void COutput::SpecialOutput_Turbo(CSolver ****solver, CGeometry ***geometry, CCo
       myfile.width(30); myfile << EnthalpyOut           [val_iZone][iSpan]*config[ZONE_0]->GetEnergy_Ref();
       myfile.width(30); myfile << TotalEnthalpyOut      [val_iZone][iSpan]*config[ZONE_0]->GetEnergy_Ref();
       myfile.width(30); myfile << DensityOut            [val_iZone][iSpan]*config[ZONE_0]->GetDensity_Ref();
+      myfile.width(30); myfile << TotalDensityOut       [val_iZone][iSpan]*config[ZONE_0]->GetDensity_Ref();
       myfile.width(30); myfile << EntropyOut            [val_iZone][iSpan]*config[ZONE_0]->GetEnergy_Ref()/config[ZONE_0]->GetTemperature_Ref();
+      myfile.width(30); myfile << SoundSpeedOut         [val_iZone][iSpan];
+
       if(TurbIntensityOut[val_iZone][iSpan] > 1.0){
         myfile.width(30); myfile << TurbIntensityOut      [val_iZone][config[ZONE_0]->GetnSpan_iZones(val_iZone)/2];
       }else{
@@ -10811,7 +10831,7 @@ void COutput::SpecialOutput_Turbo(CSolver ****solver, CGeometry ***geometry, CCo
     myfile << "TITLE = \"Inflow Span-wise Kinematic Values. iExtIter = " << iExtIter << " \"" << endl;
     myfile << "VARIABLES =" << endl;
 
-    myfile.width(30); myfile << "\"Spaneise value [m]\"";
+    myfile.width(30); myfile << "\"Spanwise value [m]\"";
     myfile.width(15); myfile << "\"iSpan [-]\"";
     myfile.width(30); myfile << "\"Spanwise fraction [-]\"";
     myfile.width(30); myfile << "\"Normal Mach [-]\"";
@@ -10879,7 +10899,7 @@ void COutput::SpecialOutput_Turbo(CSolver ****solver, CGeometry ***geometry, CCo
     myfile << "TITLE = \"Outflow Span-wise Kinematic Values. iExtIter = " << iExtIter << " \"" << endl;
     myfile << "VARIABLES =" << endl;
 
-    myfile.width(30); myfile << "\"Spanwise Value [m]\"";
+    myfile.width(30); myfile << "\"Spanwise value [m]\"";
     myfile.width(15); myfile << "\"iSpan [-]\"";
     myfile.width(30); myfile << "\"Spanwise fraction [-]\"";
     myfile.width(30); myfile << "\"Normal Mach [-]\"";
