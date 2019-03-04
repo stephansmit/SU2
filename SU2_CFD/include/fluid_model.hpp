@@ -215,10 +215,17 @@ public:
 		 */
 		void SetLaminarViscosityModel (CConfig *config);
 
+
+		void SetLaminarViscosityModelDirect (CViscosityModel *model);
+
+
 		/*!
 		 * \brief Set thermal conductivity model.
 		 */
 		void SetThermalConductivityModel (CConfig *config);
+
+
+		void SetThermalConductivityModelDirect (CConductivityModel *model);
 
 		/*!
 		 * \brief virtual member that would be different for each gas model implemented

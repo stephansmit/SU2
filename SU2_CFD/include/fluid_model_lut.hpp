@@ -173,6 +173,9 @@ public:
 	 */
 	CLookUpTable(CConfig *config, bool dimensional);
 
+	CLookUpTable(string LUT_Thermodynamic_FileName,bool LUT_Debug_Mode, bool dimensional);
+
+
 	/*!
 	 * \brief Destructor of the class, primarily handling the dealloc of the KD_trees and LUT itself.
 	 */

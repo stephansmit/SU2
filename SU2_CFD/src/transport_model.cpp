@@ -94,7 +94,64 @@ void CSutherland::SetDerViscosity(su2double T, su2double rho) {
 
 }
 
+CLookUpTable_Viscosity::CLookUpTable_Viscosity(string LUTTransportFileName,bool LUTDebugMode, bool dimensional) : CViscosityModel() {
+	LUT_Debug_Mode = LUTDebugMode;
+	rank = MASTER_NODE;
+#ifdef HAVE_MPI
+	MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+#endif
 
+	if (dimensional) {
+		Pressure_Reference_Value = 1;
+		Temperature_Reference_Value = 1;
+		Density_Reference_Value = 1;
+		Viscosity_Reference_Value=1;
+
+	} else {
+		Pressure_Reference_Value = 1;
+		Temperature_Reference_Value = 1;
+		Density_Reference_Value = 1;
+		Viscosity_Reference_Value=1;
+	}
+	skewed_linear_table = false;
+	//Detect cfx filetype
+	if ((LUTTransportFileName).find(".rgp") != string::npos) {
+		if (rank == MASTER_NODE) {
+			cout << "CFX type LUT Viscosity found" << endl;
+		}
+		LookUpTable_Load_CFX(LUTTransportFileName);
+	}
+	//Detect dat file type
+	else if ((LUTTransportFileName).find(".dat") != string::npos) {
+		if (rank == MASTER_NODE) {
+			cout << "DAT type LUT Viscosity found" << endl;
+		}
+		LookUpTable_Load_DAT(LUTTransportFileName);
+	} else {
+		if (rank == MASTER_NODE) {
+			cout << "No recognized LUT Viscosity format found, exiting!" << endl;
+		}
+		exit(EXIT_FAILURE);
+	}
+	if (ThermoTables_Temperature[0][0]
+															 != ThermoTables_Temperature[Table_Density_Stations - 1][0]) {
+		skewed_linear_table = true;
+	}
+
+	for (int i = 0; i < 4; i++) {
+		for (int j = 0; j < 4; j++) {
+			Interpolation_Coeff[i][j] = -1.0;
+		}
+	}
+	if (rank == MASTER_NODE) {
+		// Give the user some information on the size of the table
+		cout << "Table_Temperature_Stations  : " << Table_Temperature_Stations << endl;
+		cout << "Table_Density_Stations: " << Table_Density_Stations << endl;
+		cout<<"Print LUT Viscosity errors? (LUT_Debug_Mode):  "<<LUT_Debug_Mode<<endl;
+	}
+
+
+}
 
 CLookUpTable_Viscosity::CLookUpTable_Viscosity(CConfig *config, bool dimensional) : CViscosityModel() {
 	LUT_Debug_Mode = config->GetLUT_Debug_Mode();
@@ -901,6 +958,66 @@ void CConstantPrandtl::SetDerConductivity(su2double T, su2double rho,
 
 CConstantPrandtl::~CConstantPrandtl(void) {
 }
+
+CLookUpTable_Conductivity::CLookUpTable_Conductivity(string LUTTransportFileName, bool LUTDebugMode, bool dimensional) : CConductivityModel() {
+	LUT_Debug_Mode = LUTDebugMode;
+	rank = MASTER_NODE;
+#ifdef HAVE_MPI
+	MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+#endif
+
+
+	if (dimensional) {
+		Pressure_Reference_Value = 1;
+		Temperature_Reference_Value = 1;
+		Density_Reference_Value = 1;
+		Conductivity_Reference_Value=1;
+
+	} else {
+		Pressure_Reference_Value = 1;
+		Temperature_Reference_Value = 1;
+		Density_Reference_Value = 1;
+		Conductivity_Reference_Value=1;
+	}
+
+	skewed_linear_table = false;
+	//Detect cfx filetype
+	if ((LUTTransportFileName).find(".rgp") != string::npos) {
+		if (rank == MASTER_NODE) {
+			cout << "CFX type LUT Conductivity found" << endl;
+		}
+		LookUpTable_Load_CFX(LUTTransportFileName);
+	}
+	//Detect dat file type
+	else if ((LUTTransportFileName).find(".dat") != string::npos) {
+		if (rank == MASTER_NODE) {
+			cout << "DAT type LUT Conductivity found" << endl;
+		}
+		LookUpTable_Load_DAT(LUTTransportFileName);
+	} else {
+		if (rank == MASTER_NODE) {
+			cout << "No recognized LUT Conductivity format found, exiting!" << endl;
+		}
+		exit(EXIT_FAILURE);
+	}
+	if (ThermoTables_Temperature[0][0]
+															 != ThermoTables_Temperature[Table_Density_Stations - 1][0]) {
+		skewed_linear_table = true;
+	}
+
+	for (int i = 0; i < 4; i++) {
+		for (int j = 0; j < 4; j++) {
+			Interpolation_Coeff[i][j] = -1.0;
+		}
+	}
+	if (rank == MASTER_NODE) {
+		// Give the user some information on the size of the table
+		cout << "Table_Temperature_Stations  : " << Table_Temperature_Stations << endl;
+		cout << "Table_Density_Stations: " << Table_Density_Stations << endl;
+		cout<<"Print LUT Conductivity errors? (LUT_Debug_Mode):  "<<LUT_Debug_Mode<<endl;
+	}
+}
+
 
 
 CLookUpTable_Conductivity::CLookUpTable_Conductivity(CConfig *config, bool dimensional) : CConductivityModel() {

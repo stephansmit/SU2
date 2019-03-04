@@ -226,6 +226,8 @@ public:
 	 */
 	CLookUpTable_Viscosity(CConfig *config, bool dimensional);
 
+	CLookUpTable_Viscosity(string LUTTransportFileName,bool LUTDebugMode, bool dimensional);
+
 	/*!
 	 * \brief Destructor of the class, primarily handling the dealloc of the KD_trees and LUT itself.
 	 */
@@ -453,6 +455,8 @@ public:
 	 * \param[in] Filename - The name of the (.rgp) file from which to load the table
 	 */
 	CLookUpTable_Conductivity(CConfig *config, bool dimensional);
+
+	CLookUpTable_Conductivity(string LUTTransportFileName, bool LUTDebugMode, bool dimensional);
 
 	/*!
 	 * \brief Destructor of the class, primarily handling the dealloc of the KD_trees and LUT itself.

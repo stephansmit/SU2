@@ -86,10 +86,19 @@ void CFluidModel::SetThermalConductivityModel (CConfig *config) {
     ThermalConductivity = new CConstantPrandtl(config->GetPrandtl_Lam());
     break;
   case LUT_CONDUCTIVITY:
-		ThermalConductivity = new CLookUpTable_Conductivity(config, config->GetBoolDimensionalLUTConductivity());
-  break;
+	ThermalConductivity = new CLookUpTable_Conductivity(config, config->GetBoolDimensionalLUTConductivity());
+	break;
 
   }
   
 }
 
+void CFluidModel::SetLaminarViscosityModelDirect(CViscosityModel *model){
+	LaminarViscosity = NULL;
+	LaminarViscosity = model;
+}
+
+void CFluidModel::SetThermalConductivityModelDirect(CConductivityModel *model){
+	ThermalConductivity = NULL;
+	ThermalConductivity = model;
+}

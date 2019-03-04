@@ -239,6 +239,144 @@ void CTrapezoidalMap::Search_Band_For_Edge(su2double x, su2double y) {
 	UpperEdge = Y_Values_of_Edge_Within_Band_And_Index[LowerI][UpperJ].second;
 	LowerEdge = Y_Values_of_Edge_Within_Band_And_Index[LowerI][LowerJ].second;
 }
+CLookUpTable::CLookUpTable(string LUTThermodynamicFileName,bool LUTDebugMode, bool dimensional) :
+				CFluidModel() {
+	LUT_Debug_Mode = false;
+	rank = MASTER_NODE;
+	//TODO this has to be generalize for multi-zone
+	unsigned int SinglePhaseZone = 0;
+	CurrentZone= SinglePhaseZone;
+	nInterpPoints = 3;
+	CurrentPoints.resize(nInterpPoints, 0);
+	LUT_Debug_Mode = LUTDebugMode;
+	Interpolation_Matrix.resize(nInterpPoints,
+			vector<su2double>(nInterpPoints, 0));
+	Interpolation_Matrix_Inverse.resize(nInterpPoints,
+			vector<su2double>(nInterpPoints, 0));
+
+#ifdef HAVE_MPI
+	MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+#endif
+
+	if (dimensional) {
+		Pressure_Reference_Value = 1;
+		Temperature_Reference_Value = 1;
+		Density_Reference_Value = 1;
+		Velocity_Reference_Value = 1;
+		Energy_Reference_Value = 1;
+	} else {
+		Pressure_Reference_Value = 1;
+		Temperature_Reference_Value = 1;
+		Density_Reference_Value = 1;
+		Velocity_Reference_Value = 1;
+		Energy_Reference_Value = 1;
+	}
+
+	if ((LUTThermodynamicFileName).find(".tec") != string::npos) {
+		if (rank == MASTER_NODE) {
+			cout << ".tec type LUT found" << endl;
+		}
+		LookUpTable_Load_TEC(LUTThermodynamicFileName);
+	} else {
+		if (rank == MASTER_NODE) {
+			cout << "No recognized LUT format found, exiting!" << endl;
+		}
+		exit(EXIT_FAILURE);
+	}
+
+	if (rank == MASTER_NODE) {
+		// Give the user some information on the size of the table
+		cout << "Number of stations  in zone 0: " << nTable_Zone_Stations[0]
+																																			<< endl;
+		cout << "Number of triangles in zone 0: " << nTable_Zone_Triangles[0]
+																																			 << endl;
+		cout << "Number of stations  in zone 1: " << nTable_Zone_Stations[1]
+																																			<< endl;
+		cout << "Number of triangles in zone 1: " << nTable_Zone_Triangles[1]
+																																			 << endl;
+		cout<< "Detecting all unique edges and setting edge to face connectivity..."<< endl;
+	}
+	Get_Unique_Edges();
+	if (rank == MASTER_NODE) {
+		cout << "Number of edges in zone 0: " << Table_Zone_Edges[0].size() << endl;
+		cout << "Number of edges in zone 1: " << Table_Zone_Edges[1].size() << endl;
+
+	}
+
+	if (rank == MASTER_NODE) {
+		// Building an KD_tree for the HS thermopair
+		cout << "Building trapezoidal map for rhoe..." << endl;
+	}
+	//Buld a map for all search pairs
+	//Currently only zone 1 is actually in use so one could
+	//also skip zone 0
+	rhoe_map[0] = CTrapezoidalMap(ThermoTables_Density[0],
+			ThermoTables_StaticEnergy[0], Table_Zone_Edges[0],
+			Table_Edge_To_Face_Connectivity[0]);
+	rhoe_map[1] = CTrapezoidalMap(ThermoTables_Density[1],
+			ThermoTables_StaticEnergy[1], Table_Zone_Edges[1],
+			Table_Edge_To_Face_Connectivity[1]);
+
+	if (rank == MASTER_NODE) {
+		cout << "Building trapezoidal map for Prho..." << endl;
+	}
+	Prho_map[0] = CTrapezoidalMap(ThermoTables_Pressure[0],
+			ThermoTables_Density[0], Table_Zone_Edges[0],
+			Table_Edge_To_Face_Connectivity[0]);
+	Prho_map[1] = CTrapezoidalMap(ThermoTables_Pressure[1],
+			ThermoTables_Density[1], Table_Zone_Edges[1],
+			Table_Edge_To_Face_Connectivity[1]);
+
+	if (rank == MASTER_NODE) {
+		cout << "Building trapezoidal map for hs..." << endl;
+	}
+	hs_map[0] = CTrapezoidalMap(ThermoTables_Enthalpy[0], ThermoTables_Entropy[0],
+			Table_Zone_Edges[0], Table_Edge_To_Face_Connectivity[0]);
+	hs_map[1] = CTrapezoidalMap(ThermoTables_Enthalpy[1], ThermoTables_Entropy[1],
+			Table_Zone_Edges[1], Table_Edge_To_Face_Connectivity[1]);
+
+	if (rank == MASTER_NODE) {
+		cout << "Building trapezoidal map for Ps..." << endl;
+	}
+	Ps_map[0] = CTrapezoidalMap(ThermoTables_Pressure[0], ThermoTables_Entropy[0],
+			Table_Zone_Edges[0], Table_Edge_To_Face_Connectivity[0]);
+	Ps_map[1] = CTrapezoidalMap(ThermoTables_Pressure[1], ThermoTables_Entropy[1],
+			Table_Zone_Edges[1], Table_Edge_To_Face_Connectivity[1]);
+
+	if (rank == MASTER_NODE) {
+		cout << "Building trapezoidal map for rhoT..." << endl;
+	}
+	rhoT_map[0] = CTrapezoidalMap(ThermoTables_Density[0],
+			ThermoTables_Temperature[0], Table_Zone_Edges[0],
+			Table_Edge_To_Face_Connectivity[0]);
+	;
+	rhoT_map[1] = CTrapezoidalMap(ThermoTables_Density[1],
+			ThermoTables_Temperature[1], Table_Zone_Edges[1],
+			Table_Edge_To_Face_Connectivity[1]);
+	;
+
+	if (rank == MASTER_NODE) {
+		cout << "Building trapezoidal map for PT (in vapor region only)..." << endl;
+	}
+	PT_map[0] = CTrapezoidalMap(ThermoTables_Pressure[0],
+			ThermoTables_Temperature[0], Table_Zone_Edges[0],
+			Table_Edge_To_Face_Connectivity[0]);
+	;
+	PT_map[1] = PT_map[0];
+
+	if (rank == MASTER_NODE) {
+		cout << "Print LUT errors? (LUT_Debug_Mode):  " << LUT_Debug_Mode << endl;
+	}
+
+	if (rank == MASTER_NODE) {
+		cout << "Precomputing interpolation coefficients..." << endl;
+	}
+	Compute_Interpolation_Coefficients();
+	if (rank == MASTER_NODE) {
+		cout << "LuT fluid model ready for use" << endl;
+	}
+
+}
 
 CLookUpTable::CLookUpTable(CConfig *config, bool dimensional) :
 				CFluidModel() {
