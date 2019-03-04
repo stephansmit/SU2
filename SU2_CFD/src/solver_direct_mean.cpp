@@ -3984,6 +3984,10 @@ void CEulerSolver::SetNondimensionalization(CGeometry *geometry, CConfig *config
           cout << "Laminar Viscosity (non-dim): " << config->GetMu_ConstantND()<< endl;
           break;
 
+        case LUT_VISCOSITY:
+          cout << "Viscosity Model: LUT_VISCOSITY  "<< endl;
+          break;
+
         case SUTHERLAND:
           cout << "Viscosity Model: SUTHERLAND "<< endl;
           cout << "Ref. Laminar Viscosity: " << config->GetMu_Ref();
@@ -4014,6 +4018,9 @@ void CEulerSolver::SetNondimensionalization(CGeometry *geometry, CConfig *config
           cout << "Molecular Conductivity (non-dim): " << config->GetKt_ConstantND()<< endl;
           break;
 
+        case LUT_CONDUCTIVITY:
+          cout << "Conductivity Model: LUT_CONDUCTIVITY "<< endl;
+          break;
       }
     }
 
