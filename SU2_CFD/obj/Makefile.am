@@ -59,6 +59,7 @@ endif
 libSU2Core_sources = \
   ../include/definition_structure.hpp \
   ../include/fluid_model.hpp \
+  ../include/fluid_model_lut.hpp \
   ../include/fluid_model.inl \
   ../include/integration_structure.hpp \
   ../include/integration_structure.inl \
@@ -79,6 +80,7 @@ libSU2Core_sources = \
   ../include/transfer_structure.inl \
   ../src/definition_structure.cpp \
   ../src/fluid_model.cpp \
+  ../src/fluid_model_lut.cpp \
   ../src/fluid_model_pig.cpp \
   ../src/fluid_model_pvdw.cpp \
   ../src/fluid_model_ppr.cpp \

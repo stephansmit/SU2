@@ -3662,6 +3662,20 @@ void CEulerSolver::SetNondimensionalization(CGeometry *geometry, CConfig *config
       }
       break;
 
+    case LUT:
+      FluidModel = new CLookUpTable(config, true);
+      if (free_stream_temp) {
+        FluidModel->SetTDState_PT(Pressure_FreeStream, Temperature_FreeStream);
+        Density_FreeStream = FluidModel->GetDensity();
+        config->SetDensity_FreeStream(Density_FreeStream);
+      }
+      else {
+        FluidModel->SetTDState_Prho(Pressure_FreeStream, Density_FreeStream );
+        Temperature_FreeStream = FluidModel->GetTemperature();
+        config->SetTemperature_FreeStream(Temperature_FreeStream);
+      }
+      break;
+
   }
 
   Mach2Vel_FreeStream = FluidModel->GetSoundSpeed();
@@ -3695,13 +3709,13 @@ void CEulerSolver::SetNondimensionalization(CGeometry *geometry, CConfig *config
     config->SetMu_RefND(config->GetMu_Ref());
     config->SetMu_Temperature_RefND(config->GetMu_Temperature_Ref());
     config->SetMu_SND(config->GetMu_S());
-
     config->SetMu_ConstantND(config->GetMu_Constant());
+    config->SetKt_ConstantND(config->GetKt_Constant());
+
 
     /*--- Reynolds based initialization ---*/
 
     if (reynolds_init) {
-
       /*--- First, check if there is mesh motion. If yes, use the Mach
          number relative to the body to initialize the flow. ---*/
 
@@ -3714,6 +3728,7 @@ void CEulerSolver::SetNondimensionalization(CGeometry *geometry, CConfig *config
             viscosity, depending on the input option.---*/
 
       FluidModel->SetLaminarViscosityModel(config);
+      FluidModel->SetThermalConductivityModel(config);
 
       Viscosity_FreeStream = FluidModel->GetLaminarViscosity();
       config->SetViscosity_FreeStream(Viscosity_FreeStream);
@@ -3724,19 +3739,22 @@ void CEulerSolver::SetNondimensionalization(CGeometry *geometry, CConfig *config
       Pressure_FreeStream = FluidModel->GetPressure();
       config->SetPressure_FreeStream(Pressure_FreeStream);
       Energy_FreeStream = FluidModel->GetStaticEnergy() + 0.5*ModVel_FreeStream*ModVel_FreeStream;
-
     }
 
     /*--- Thermodynamics quantities based initialization ---*/
 
     else {
-
+      config->SetBoolDimensionalLUTViscosity(true);
+      config->SetBoolDimensionalLUTConductivity(true);
       FluidModel->SetLaminarViscosityModel(config);
+      FluidModel->SetThermalConductivityModel(config);
       Viscosity_FreeStream = FluidModel->GetLaminarViscosity();
       config->SetViscosity_FreeStream(Viscosity_FreeStream);
       Energy_FreeStream = FluidModel->GetStaticEnergy() + 0.5*ModVel_FreeStream*ModVel_FreeStream;
-
     }
+
+    config->SetBoolDimensionalLUTViscosity(false);
+    config->SetBoolDimensionalLUTConductivity(false);
 
     /*--- Turbulence kinetic energy ---*/
 
@@ -3779,30 +3797,32 @@ void CEulerSolver::SetNondimensionalization(CGeometry *geometry, CConfig *config
     Density_Ref       = Density_FreeStream;        // Density_FreeStream = 1.0
     Temperature_Ref   = Temperature_FreeStream;    // Temp_FreeStream = 1.0
   }
+
   config->SetPressure_Ref(Pressure_Ref);
   config->SetDensity_Ref(Density_Ref);
   config->SetTemperature_Ref(Temperature_Ref);
 
-  Length_Ref        = 1.0;                                                         config->SetLength_Ref(Length_Ref);
-  Velocity_Ref      = sqrt(config->GetPressure_Ref()/config->GetDensity_Ref());    config->SetVelocity_Ref(Velocity_Ref);
-  Time_Ref          = Length_Ref/Velocity_Ref;                                     config->SetTime_Ref(Time_Ref);
-  Omega_Ref         = Velocity_Ref/Length_Ref;                                     config->SetOmega_Ref(Omega_Ref);
-  Force_Ref         = Velocity_Ref*Velocity_Ref/Length_Ref;                        config->SetForce_Ref(Force_Ref);
-  Gas_Constant_Ref  = Velocity_Ref*Velocity_Ref/config->GetTemperature_Ref();      config->SetGas_Constant_Ref(Gas_Constant_Ref);
-  Viscosity_Ref     = config->GetDensity_Ref()*Velocity_Ref*Length_Ref;            config->SetViscosity_Ref(Viscosity_Ref);
-  Conductivity_Ref  = Viscosity_Ref*Gas_Constant_Ref;                              config->SetConductivity_Ref(Conductivity_Ref);
-  Froude            = ModVel_FreeStream/sqrt(STANDART_GRAVITY*Length_Ref);         config->SetFroude(Froude);
+  Length_Ref        = 1.0;                                                  config->SetLength_Ref(Length_Ref);
+  Velocity_Ref      = sqrt(Pressure_Ref/Density_Ref);                       config->SetVelocity_Ref(Velocity_Ref);
+  Energy_Ref        = pow(Velocity_Ref,2);                                  config->SetEnergy_Ref(Energy_Ref);
+  Time_Ref          = Length_Ref/Velocity_Ref;                              config->SetTime_Ref(Time_Ref);
+  Omega_Ref         = Velocity_Ref/Length_Ref;                              config->SetOmega_Ref(Omega_Ref);
+  Force_Ref         = Pressure_Ref*pow(Length_Ref, 2);                      config->SetForce_Ref(Force_Ref);
+  Gas_Constant_Ref  = Velocity_Ref*Velocity_Ref/Temperature_Ref;            config->SetGas_Constant_Ref(Gas_Constant_Ref);
+  Viscosity_Ref     = Pressure_Ref*Time_Ref;                                config->SetViscosity_Ref(Viscosity_Ref);
+  Conductivity_Ref  = Viscosity_Ref*Gas_Constant_Ref;                       config->SetConductivity_Ref(Conductivity_Ref);
+  Froude            = ModVel_FreeStream/sqrt(STANDART_GRAVITY*Length_Ref);  config->SetFroude(Froude);
   
   /*--- Divide by reference values, to compute the non-dimensional free-stream values ---*/
   
-  Pressure_FreeStreamND = Pressure_FreeStream/config->GetPressure_Ref();  config->SetPressure_FreeStreamND(Pressure_FreeStreamND);
-  Density_FreeStreamND  = Density_FreeStream/config->GetDensity_Ref();    config->SetDensity_FreeStreamND(Density_FreeStreamND);
-  
+  Pressure_FreeStreamND    = Pressure_FreeStream/Pressure_Ref;  config->SetPressure_FreeStreamND(Pressure_FreeStreamND);
+  Density_FreeStreamND     = Density_FreeStream/Density_Ref;    config->SetDensity_FreeStreamND(Density_FreeStreamND);
+  Temperature_FreeStreamND = Temperature_FreeStream/Temperature_Ref; config->SetTemperature_FreeStreamND(Temperature_FreeStreamND);
+  Energy_FreeStreamND      = Energy_FreeStream/Energy_Ref; config->SetEnergy_FreeStreamND(Energy_FreeStreamND);
+
   for (iDim = 0; iDim < nDim; iDim++) {
     Velocity_FreeStreamND[iDim] = config->GetVelocity_FreeStream()[iDim]/Velocity_Ref; config->SetVelocity_FreeStreamND(Velocity_FreeStreamND[iDim], iDim);
   }
-  
-  Temperature_FreeStreamND = Temperature_FreeStream/config->GetTemperature_Ref(); config->SetTemperature_FreeStreamND(Temperature_FreeStreamND);
   
   Gas_ConstantND = config->GetGas_Constant()/Gas_Constant_Ref;    config->SetGas_ConstantND(Gas_ConstantND);
   
@@ -3825,63 +3845,58 @@ void CEulerSolver::SetNondimensionalization(CGeometry *geometry, CConfig *config
   Omega_FreeStreamND = Density_FreeStreamND*Tke_FreeStreamND/(Viscosity_FreeStreamND*config->GetTurb2LamViscRatio_FreeStream());
   config->SetOmega_FreeStreamND(Omega_FreeStreamND);
   
-  /*--- Initialize the dimensionless Fluid Model that will be used to solve the dimensionless problem ---*/
- 
+
+  if (config->GetRef_NonDim() != DIMENSIONAL)  {
   /*--- Delete the original (dimensional) FluidModel object before replacing. ---*/
   
-  delete FluidModel;
+      delete FluidModel;
  
-  switch (config->GetKind_FluidModel()) {
-      
-    case STANDARD_AIR:
-      FluidModel = new CIdealGas(1.4, Gas_ConstantND);
-      FluidModel->SetEnergy_Prho(Pressure_FreeStreamND, Density_FreeStreamND);
-      break;
-      
-    case IDEAL_GAS:
-      FluidModel = new CIdealGas(Gamma, Gas_ConstantND);
-      FluidModel->SetEnergy_Prho(Pressure_FreeStreamND, Density_FreeStreamND);
-      break;
-      
-    case VW_GAS:
-      FluidModel = new CVanDerWaalsGas(Gamma, Gas_ConstantND, config->GetPressure_Critical() /config->GetPressure_Ref(),
-                                       config->GetTemperature_Critical()/config->GetTemperature_Ref());
-      FluidModel->SetEnergy_Prho(Pressure_FreeStreamND, Density_FreeStreamND);
-      break;
-      
-    case PR_GAS:
-      FluidModel = new CPengRobinson(Gamma, Gas_ConstantND, config->GetPressure_Critical() /config->GetPressure_Ref(),
-                                     config->GetTemperature_Critical()/config->GetTemperature_Ref(), config->GetAcentric_Factor());
-      FluidModel->SetEnergy_Prho(Pressure_FreeStreamND, Density_FreeStreamND);
-      break;
-      
+      switch (config->GetKind_FluidModel()) {
+
+        case STANDARD_AIR:
+          FluidModel = new CIdealGas(1.4, Gas_ConstantND);
+          break;
+
+        case IDEAL_GAS:
+          FluidModel = new CIdealGas(Gamma, Gas_ConstantND);
+          break;
+
+        case VW_GAS:
+          FluidModel = new CVanDerWaalsGas(Gamma, Gas_ConstantND, config->GetPressure_Critical() /config->GetPressure_Ref(),
+                                           config->GetTemperature_Critical()/config->GetTemperature_Ref());
+          break;
+
+        case PR_GAS:
+          FluidModel = new CPengRobinson(Gamma, Gas_ConstantND, config->GetPressure_Critical() /config->GetPressure_Ref(),
+                                         config->GetTemperature_Critical()/config->GetTemperature_Ref(), config->GetAcentric_Factor());
+          break;
+
+
+        case LUT:
+          FluidModel = new CLookUpTable(config, false);
+          break;
+      }
+
+      if (viscous) {
+
+		/*--- Constant viscosity model ---*/
+		config->SetMu_ConstantND(config->GetMu_Constant()/Viscosity_Ref);
+
+		/*--- Sutherland's model ---*/
+
+		config->SetMu_RefND(config->GetMu_Ref()/Viscosity_Ref);
+		config->SetMu_SND(config->GetMu_S()/Temperature_Ref);
+		config->SetMu_Temperature_RefND(config->GetMu_Temperature_Ref()/Temperature_Ref);
+
+		/* constant thermal conductivity model */
+		config->SetKt_ConstantND(config->GetKt_Constant()/Conductivity_Ref);
+
+		FluidModel->SetLaminarViscosityModel(config);
+		FluidModel->SetThermalConductivityModel(config);
+
+	  }
   }
-  
-  Energy_FreeStreamND = FluidModel->GetStaticEnergy() + 0.5*ModVel_FreeStreamND*ModVel_FreeStreamND;
-  
-  if (viscous) {
-    
-    /*--- Constant viscosity model ---*/
-    config->SetMu_ConstantND(config->GetMu_Constant()/Viscosity_Ref);
-    
-    /*--- Sutherland's model ---*/
-    
-    config->SetMu_RefND(config->GetMu_Ref()/Viscosity_Ref);
-    config->SetMu_SND(config->GetMu_S()/config->GetTemperature_Ref());
-    config->SetMu_Temperature_RefND(config->GetMu_Temperature_Ref()/config->GetTemperature_Ref());
-    
-    /* constant thermal conductivity model */
-    config->SetKt_ConstantND(config->GetKt_Constant()/Conductivity_Ref);
-    
-    FluidModel->SetLaminarViscosityModel(config);
-    FluidModel->SetThermalConductivityModel(config);
-    
-  }
-  
-  if (tkeNeeded) { Energy_FreeStreamND += Tke_FreeStreamND; };  config->SetEnergy_FreeStreamND(Energy_FreeStreamND);
-  
-  Energy_Ref = Energy_FreeStream/Energy_FreeStreamND; config->SetEnergy_Ref(Energy_Ref);
-  
+
   Total_UnstTimeND = config->GetTotal_UnstTime() / Time_Ref;    config->SetTotal_UnstTimeND(Total_UnstTimeND);
   Delta_UnstTimeND = config->GetDelta_UnstTime() / Time_Ref;    config->SetDelta_UnstTimeND(Delta_UnstTimeND);
   
@@ -3945,7 +3960,19 @@ void CEulerSolver::SetNondimensionalization(CGeometry *geometry, CConfig *config
         cout << "Critical Temperature (non-dim) :  " << config->GetTemperature_Critical() /config->GetTemperature_Ref() << endl;
         break;
 
+      case LUT:
+          cout << "Fluid Model: Structured P-rho LUT "<< endl;
+          cout << "Specific gas constant: " << config->GetGas_Constant() << " N.m/kg.K." << endl;
+          cout << "Specific gas constant (non-dim): " << config->GetGas_ConstantND()<< endl;
+          cout << "Specific Heat Ratio: "<< Gamma << endl;
+          cout << "Critical Pressure:   " << config->GetPressure_Critical()  << " Pa." << endl;
+          cout << "Critical Temperature:  " << config->GetTemperature_Critical() << " K." << endl;
+          cout << "Critical Pressure (non-dim):   " << config->GetPressure_Critical() /config->GetPressure_Ref() << endl;
+          cout << "Critical Temperature (non-dim) :  " << config->GetTemperature_Critical() /config->GetTemperature_Ref() << endl;
+          break;
+
     }
+
     if (viscous) {
       switch (config->GetKind_ViscosityModel()) {
 
@@ -4715,7 +4742,10 @@ void CEulerSolver::Upwind_Residual(CGeometry *geometry, CSolver **solver_contain
   bool roe_turkel       = (config->GetKind_Upwind_Flow() == TURKEL);
   bool ideal_gas        = (config->GetKind_FluidModel() == STANDARD_AIR || config->GetKind_FluidModel() == IDEAL_GAS );
   bool van_albada       = config->GetKind_SlopeLimit_Flow() == VAN_ALBADA_EDGE;
+  bool minmod           = config->GetKind_SlopeLimit_Flow() == MINMOD_EDGE;
   bool low_mach_corr    = config->Low_Mach_Correction();
+
+  su2double Delta, Delta_Left, Delta_Right, Sol_Left, Sol_Right;
 
   /*--- Loop over all the edges ---*/
 
@@ -4772,15 +4802,43 @@ void CEulerSolver::Upwind_Residual(CGeometry *geometry, CSolver **solver_contain
           if (van_albada){
             Limiter_i[iVar] = (V_j[iVar]-V_i[iVar])*(2.0*Project_Grad_i + V_j[iVar]-V_i[iVar])/(4*Project_Grad_i*Project_Grad_i+(V_j[iVar]-V_i[iVar])*(V_j[iVar]-V_i[iVar])+EPS);
             Limiter_j[iVar] = (V_j[iVar]-V_i[iVar])*(-2.0*Project_Grad_j + V_j[iVar]-V_i[iVar])/(4*Project_Grad_j*Project_Grad_j+(V_j[iVar]-V_i[iVar])*(V_j[iVar]-V_i[iVar])+EPS);
-          }
-          Primitive_i[iVar] = V_i[iVar] + Limiter_i[iVar]*Project_Grad_i;
-          Primitive_j[iVar] = V_j[iVar] + Limiter_j[iVar]*Project_Grad_j;
+            Primitive_i[iVar] = V_i[iVar] + Limiter_i[iVar]*Project_Grad_i;
+            Primitive_j[iVar] = V_j[iVar] + Limiter_j[iVar]*Project_Grad_j;
+
+          } else if (minmod){
+        	Sol_Left  = max(V_i[iVar] - Project_Grad_i, 0.0);
+        	Sol_Right = max(V_j[iVar] - Project_Grad_j, 0.0);
+
+	        Delta_Left = V_i[iVar]-Sol_Left; Delta_Right = (V_j[iVar]-V_i[iVar])/2;
+
+        	if (Delta_Left > 0 && Delta_Right > 0) {
+        	    Delta    = 1.0;
+        	} else if (Delta_Left < 0 && Delta_Right < 0) {
+        	    Delta = -1.0;
+        	} else {
+        	    Delta = 0;
+        	}
+        	Delta = Delta *min(fabs(Delta_Left),fabs(Delta_Right));
+        	Primitive_i[iVar] = V_i[iVar] + Delta;
+
+        	Delta_Left = Sol_Right-V_j[iVar]; Delta_Right = (V_j[iVar]-V_i[iVar])/2;
+
+			if (Delta_Left > 0 && Delta_Right > 0) {
+				Delta    = 1.0;
+			} else if (Delta_Left < 0 && Delta_Right < 0) {
+			 Delta = -1.0;
+			} else {
+			 Delta = 0;
+			}
+			Delta = Delta *min(fabs(Delta_Left),fabs(Delta_Right));
+			Primitive_j[iVar] = V_j[iVar] - Delta;
         }
-        else {
+
+        } else {
           Primitive_i[iVar] = V_i[iVar] + Project_Grad_i;
           Primitive_j[iVar] = V_j[iVar] + Project_Grad_j;
         }
-      }
+    }
 
       /*--- Recompute the extrapolated quantities in a
        thermodynamic consistent way  ---*/
@@ -9295,6 +9353,7 @@ void CEulerSolver::BC_Riemann(CGeometry *geometry, CSolver **solver_container,
         StaticEnergy_e = FluidModel->GetStaticEnergy();
         Energy_e = StaticEnergy_e + 0.5 * Velocity2_e;
         if (tkeNeeded) Energy_e += GetTke_Inf();
+
         break;
 
       case STATIC_SUPERSONIC_INFLOW_PT:
@@ -9383,6 +9442,7 @@ void CEulerSolver::BC_Riemann(CGeometry *geometry, CSolver **solver_container,
           Velocity2_e += Velocity_e[iDim]*Velocity_e[iDim];
         }
         Energy_e = FluidModel->GetStaticEnergy() + 0.5*Velocity2_e;
+
         break;
 
       default:
