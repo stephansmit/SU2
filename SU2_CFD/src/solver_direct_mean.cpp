@@ -3871,7 +3871,6 @@ void CEulerSolver::SetNondimensionalization(CGeometry *geometry, CConfig *config
                                          config->GetTemperature_Critical()/config->GetTemperature_Ref(), config->GetAcentric_Factor());
           break;
 
-
         case LUT:
           FluidModel = new CLookUpTable(config, false);
           break;
@@ -3961,15 +3960,15 @@ void CEulerSolver::SetNondimensionalization(CGeometry *geometry, CConfig *config
         break;
 
       case LUT:
-          cout << "Fluid Model: Structured P-rho LUT "<< endl;
-          cout << "Specific gas constant: " << config->GetGas_Constant() << " N.m/kg.K." << endl;
-          cout << "Specific gas constant (non-dim): " << config->GetGas_ConstantND()<< endl;
-          cout << "Specific Heat Ratio: "<< Gamma << endl;
-          cout << "Critical Pressure:   " << config->GetPressure_Critical()  << " Pa." << endl;
-          cout << "Critical Temperature:  " << config->GetTemperature_Critical() << " K." << endl;
-          cout << "Critical Pressure (non-dim):   " << config->GetPressure_Critical() /config->GetPressure_Ref() << endl;
-          cout << "Critical Temperature (non-dim) :  " << config->GetTemperature_Critical() /config->GetTemperature_Ref() << endl;
-          break;
+		cout << "Fluid Model: Structured P-rho LUT "<< endl;
+		cout << "Specific gas constant: " << config->GetGas_Constant() << " N.m/kg.K." << endl;
+		cout << "Specific gas constant (non-dim): " << config->GetGas_ConstantND()<< endl;
+		cout << "Specific Heat Ratio: "<< Gamma << endl;
+		cout << "Critical Pressure:   " << config->GetPressure_Critical()  << " Pa." << endl;
+		cout << "Critical Temperature:  " << config->GetTemperature_Critical() << " K." << endl;
+		cout << "Critical Pressure (non-dim):   " << config->GetPressure_Critical() /config->GetPressure_Ref() << endl;
+		cout << "Critical Temperature (non-dim) :  " << config->GetTemperature_Critical() /config->GetTemperature_Ref() << endl;
+		break;
 
     }
 
@@ -14898,7 +14897,9 @@ void CEulerSolver::MixedOut_Average (CConfig *config, su2double val_init_pressur
     }
 
   }
-
+  if (iter > maxiter){
+      cout << "The mixed out condition didn't converge" << endl;
+  }
   density_mix = val_Averaged_Flux[0]*val_Averaged_Flux[0]/(val_Averaged_Flux[1] - pressure_mix);
 
 

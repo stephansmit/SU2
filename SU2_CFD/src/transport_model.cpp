@@ -333,7 +333,8 @@ void CLookUpTable_Viscosity::SetDerViscosity(su2double T, su2double rho){
 			cerr << "Mu RHOT Input Density out of bounds\n";
 		}
 		if ((T > Temperature_Table_Limits[1])
-				or (T < Temperature_Table_Limits[0])) {
+				or (T < Temperature_Table_Limits[0]))
+		{
 			cerr << "Mu RHOT Input Temperature out of bounds\n";
 		}
 	}

@@ -290,4 +290,8 @@ public:
 
 	void RecordState(char* file);
 
+	void ComputeDerivativeNRBC_Prho (su2double P, su2double rho );
+
+
+
 };
