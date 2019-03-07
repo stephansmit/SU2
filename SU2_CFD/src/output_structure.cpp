@@ -4059,8 +4059,8 @@ void COutput::SetRestart(CConfig *config, CGeometry *geometry, CSolver **solver,
     
     if ((Kind_Solver == NAVIER_STOKES) || (Kind_Solver == RANS)) {
       if (config->GetOutput_FileFormat() == PARAVIEW) {
-        if (nDim == 2) restart_file << "\t\"Laminar_Viscosity\"\t\"Thermal_Conductivity\"\t\"Skin_Friction_Coefficient_X\"\t\"Skin_Friction_Coefficient_Y\"\t\"Heat_Flux\"\t\"Y_Plus\"";
-        if (nDim == 3) restart_file << "\t\"Laminar_Viscosity\"\t\"Thermal_Conductivity\"\t\"Skin_Friction_Coefficient_X\"\t\"Skin_Friction_Coefficient_Y\"\t\"Skin_Friction_Coefficient_Z\"\t\"Heat_Flux\"\t\"Y_Plus\"";
+        if (nDim == 2) restart_file << "\t\"Laminar_Viscosity\"\t\"Skin_Friction_Coefficient_X\"\t\"Skin_Friction_Coefficient_Y\"\t\"Heat_Flux\"\t\"Y_Plus\"";
+        if (nDim == 3) restart_file << "\t\"Laminar_Viscosity\"\t\"Skin_Friction_Coefficient_X\"\t\"Skin_Friction_Coefficient_Y\"\t\"Skin_Friction_Coefficient_Z\"\t\"Heat_Flux\"\t\"Y_Plus\"";
       } else {
         if (nDim == 2) restart_file << "\t\"<greek>m</greek>\"\t\"C<sub>f</sub>_x\"\t\"C<sub>f</sub>_y\"\t\"h\"\t\"y<sup>+</sup>\"";
         if (nDim == 3) restart_file << "\t\"<greek>m</greek>\"\t\"C<sub>f</sub>_x\"\t\"C<sub>f</sub>_y\"\t\"C<sub>f</sub>_z\"\t\"h\"\t\"y<sup>+</sup>\"";
@@ -11535,11 +11535,13 @@ void COutput::LoadLocalData_Flow(CConfig *config, CGeometry *geometry, CSolver *
     
     /*--- Add Entropy, Total Pressure and Isentropic Mach Number---*/
     if(turbo){
-      nVar_Par += 4;
+      nVar_Par += 5;
       Variable_Names.push_back("Entropy");
       Variable_Names.push_back("Total_Pressure");
       Variable_Names.push_back("MachIs");
       Variable_Names.push_back("SoundSpeed");
+      Variable_Names.push_back("Heat_Capacity");
+
     }
     /*--- Add Laminar Viscosity, Skin Friction, Heat Flux, & yPlus to the restart file ---*/
     
@@ -11817,6 +11819,10 @@ void COutput::LoadLocalData_Flow(CConfig *config, CGeometry *geometry, CSolver *
           Local_Data[jPoint][iVar] = TotalPressure; iVar++;
           Local_Data[jPoint][iVar] = MachIs; iVar++;
           Local_Data[jPoint][iVar] = SoundSpeed; iVar++;
+
+          /*----Store the Heat capacity----*/
+          FluidModel->SetTDState_Prho(Pressure, Density);
+          Local_Data[jPoint][iVar] = FluidModel->GetCp(); iVar++;
         }
 
         if ((Kind_Solver == NAVIER_STOKES) || (Kind_Solver == RANS)) {
@@ -11825,7 +11831,6 @@ void COutput::LoadLocalData_Flow(CConfig *config, CGeometry *geometry, CSolver *
           
           Local_Data[jPoint][iVar] = solver[FLOW_SOL]->node[iPoint]->GetLaminarViscosity(); iVar++;
           Local_Data[jPoint][iVar] = solver[FLOW_SOL]->node[iPoint]->GetThermalConductivity(); iVar++;
-
           /*--- Load data for the skin friction, heat flux, and y-plus. ---*/
           
           Local_Data[jPoint][iVar] = Aux_Frict_x[iPoint]; iVar++;
