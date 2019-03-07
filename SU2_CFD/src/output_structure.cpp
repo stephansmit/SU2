@@ -4059,8 +4059,8 @@ void COutput::SetRestart(CConfig *config, CGeometry *geometry, CSolver **solver,
     
     if ((Kind_Solver == NAVIER_STOKES) || (Kind_Solver == RANS)) {
       if (config->GetOutput_FileFormat() == PARAVIEW) {
-        if (nDim == 2) restart_file << "\t\"Laminar_Viscosity\"\t\"Skin_Friction_Coefficient_X\"\t\"Skin_Friction_Coefficient_Y\"\t\"Heat_Flux\"\t\"Y_Plus\"";
-        if (nDim == 3) restart_file << "\t\"Laminar_Viscosity\"\t\"Skin_Friction_Coefficient_X\"\t\"Skin_Friction_Coefficient_Y\"\t\"Skin_Friction_Coefficient_Z\"\t\"Heat_Flux\"\t\"Y_Plus\"";
+        if (nDim == 2) restart_file << "\t\"Laminar_Viscosity\"\t\"Thermal_Conductivity\"\t\"Skin_Friction_Coefficient_X\"\t\"Skin_Friction_Coefficient_Y\"\t\"Heat_Flux\"\t\"Y_Plus\"";
+        if (nDim == 3) restart_file << "\t\"Laminar_Viscosity\"\t\"Thermal_Conductivity\"\t\"Skin_Friction_Coefficient_X\"\t\"Skin_Friction_Coefficient_Y\"\t\"Skin_Friction_Coefficient_Z\"\t\"Heat_Flux\"\t\"Y_Plus\"";
       } else {
         if (nDim == 2) restart_file << "\t\"<greek>m</greek>\"\t\"C<sub>f</sub>_x\"\t\"C<sub>f</sub>_y\"\t\"h\"\t\"y<sup>+</sup>\"";
         if (nDim == 3) restart_file << "\t\"<greek>m</greek>\"\t\"C<sub>f</sub>_x\"\t\"C<sub>f</sub>_y\"\t\"C<sub>f</sub>_z\"\t\"h\"\t\"y<sup>+</sup>\"";
@@ -11546,6 +11546,7 @@ void COutput::LoadLocalData_Flow(CConfig *config, CGeometry *geometry, CSolver *
     if ((Kind_Solver == NAVIER_STOKES) || (Kind_Solver == RANS)) {
 			if (config->GetOutput_FileFormat() == PARAVIEW){
 				nVar_Par += 1; Variable_Names.push_back("Laminar_Viscosity");
+				nVar_Par += 1; Variable_Names.push_back("Thermal_Conductivity");
 				nVar_Par += 2;
 				Variable_Names.push_back("Skin_Friction_Coefficient_X");
 				Variable_Names.push_back("Skin_Friction_Coefficient_Y");
@@ -11823,7 +11824,8 @@ void COutput::LoadLocalData_Flow(CConfig *config, CGeometry *geometry, CSolver *
           /*--- Load data for the laminar viscosity. ---*/
           
           Local_Data[jPoint][iVar] = solver[FLOW_SOL]->node[iPoint]->GetLaminarViscosity(); iVar++;
-          
+          Local_Data[jPoint][iVar] = solver[FLOW_SOL]->node[iPoint]->GetThermalConductivity(); iVar++;
+
           /*--- Load data for the skin friction, heat flux, and y-plus. ---*/
           
           Local_Data[jPoint][iVar] = Aux_Frict_x[iPoint]; iVar++;
