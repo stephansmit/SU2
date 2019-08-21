@@ -11981,9 +11981,9 @@ void COutput::SpecialOutput_Turbo(CSolver *****solver, CGeometry ****geometry, C
     myfile.width(30); myfile << "\"Enthalpy[J]\"";
     myfile.width(30); myfile << "\"TotalEnthalpy[J]\"";
     myfile.width(30); myfile << "\"Density[kg/m3]\"";
-    myfile.width(30); myfile << "\"Total Density[kg/m3]\"";
+    myfile.width(30); myfile << "\"TotalDensity[kg/m3]\"";
     myfile.width(30); myfile << "\"Entropy[J/K]\"";
-    myfile.width(30); myfile << "\"Sound Speed[m/s]\"";
+    myfile.width(30); myfile << "\"SoundSpeed[m/s]\"";
     myfile.width(30); myfile << "\"TurbIntensity[-]\"";
     myfile.width(30); myfile << "\"Turb2LamViscRatio[-]\"";
     myfile.width(30); myfile << "\"NuFactor[-]\"";
