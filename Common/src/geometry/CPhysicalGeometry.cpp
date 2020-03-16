@@ -6045,6 +6045,8 @@ void CPhysicalGeometry::ComputeNSpan(CConfig *config, unsigned short val_iZone, 
 
 
     if(marker_flag == OUTFLOW){
+      nSpanWiseSections[INFLOW-1]=100
+      nSpanWiseSections[OUTFLOW-1]=100
       if(nSpanWiseSections[INFLOW -1] != nSpanWiseSections[OUTFLOW - 1]){
         char buf[100];
         SPRINTF(buf, "nSpan inflow %u, nSpan outflow %u", nSpanWiseSections[INFLOW], nSpanWiseSections[OUTFLOW]);
@@ -6488,9 +6490,16 @@ void CPhysicalGeometry::SetTurboVertex(CConfig *config, unsigned short val_iZone
                       TurboNormal[1] = coord[1]/sqrt(Normal2);
                       TurboNormal[2] = 0.0;
                     }else{
-                      TurboNormal[0] = coord[0]/sqrt(Normal2);
-                      TurboNormal[1] = coord[1]/sqrt(Normal2);
-                      TurboNormal[2] = 0.0;
+                    if (Normal2 == 0.0){
+                       TurboNormal[0] = 1.0;
+                       TurboNormal[1] = 0.0;
+                       TurboNormal[2] = 0.0;
+                    }else
+                    {
+                       TurboNormal[0] = coord[0]/sqrt(Normal2);
+                       TurboNormal[1] = coord[1]/sqrt(Normal2);
+                       TurboNormal[2] = 0.0;
+                    }
                     }
                     break;
 
@@ -6911,9 +6920,19 @@ void CPhysicalGeometry::UpdateTurboVertex(CConfig *config, unsigned short val_iZ
                   TurboNormal[1] = coord[1]/sqrt(Normal2);
                   TurboNormal[2] = 0.0;
                 }else{
-                  TurboNormal[0] = coord[0]/sqrt(Normal2);
-                  TurboNormal[1] = coord[1]/sqrt(Normal2);
-                  TurboNormal[2] = 0.0;
+                    if (Normal2 == 0.0){
+                       TurboNormal[0] = 1.0;
+                       TurboNormal[1] = 0.0;
+                       TurboNormal[2] = 0.0;
+                    }else
+                    {
+                       TurboNormal[0] = coord[0]/sqrt(Normal2);
+                       TurboNormal[1] = coord[1]/sqrt(Normal2);
+                       TurboNormal[2] = 0.0;
+                    }
+                  //TurboNormal[0] = coord[0]/sqrt(Normal2);
+                  //TurboNormal[1] = coord[1]/sqrt(Normal2);
+                  //TurboNormal[2] = 0.0;
                 }
                 break;
 
