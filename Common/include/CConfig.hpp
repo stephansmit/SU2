@@ -420,6 +420,8 @@ private:
   CFLRedCoeff_AdjFlow,         /*!< \brief CFL reduction coefficient for the adjoint problem. */
   CFLRedCoeff_AdjTurb,         /*!< \brief CFL reduction coefficient for the adjoint turbulent problem. */
   CFLFineGrid,                 /*!< \brief CFL of the finest grid. */
+  Relaxation_Factor_Turb,                 /*!< \brief CFL of the finest grid. */
+  Relaxation_Factor_Flow,                 /*!< \brief CFL of the finest grid. */
   Max_DeltaTime,               /*!< \brief Max delta time. */
   Unst_CFL;                    /*!< \brief Unsteady CFL number. */
 
@@ -3979,6 +3981,8 @@ public:
    * \return relaxation coefficient of the linear solver for the implicit formulation.
    */
   su2double GetRelaxation_Factor_AdjFlow(void) const { return Relaxation_Factor_AdjFlow; }
+  su2double GetRelaxation_Factor_Flow(void) const { return Relaxation_Factor_Flow; }
+  su2double GetRelaxation_Factor_Turb(void) const { return Relaxation_Factor_Turb; }
 
   /*!
    * \brief Get the relaxation coefficient of the CHT coupling.

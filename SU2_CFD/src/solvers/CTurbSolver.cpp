@@ -533,9 +533,9 @@ void CTurbSolver::ComputeUnderRelaxationFactor(CSolver **solver_container, CConf
   /* Loop over the solution update given by relaxing the linear
    system for this nonlinear iteration. */
 
-  su2double localUnderRelaxation    =  1.00;
-  const su2double allowableDecrease = -0.99;
-  const su2double allowableIncrease =  0.99;
+  su2double localUnderRelaxation    =  config->GetRelaxation_Factor_Turb();
+  const su2double allowableDecrease = -0.5;
+  const su2double allowableIncrease =  0.5;
 
   SU2_OMP_FOR_STAT(omp_chunk_size)
   for (unsigned long iPoint = 0; iPoint < nPointDomain; iPoint++) {

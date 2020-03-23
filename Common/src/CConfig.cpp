@@ -1584,6 +1584,10 @@ void CConfig::SetConfig_Options() {
   addEnumOption("TIME_MARCHING", TimeMarching, TimeMarching_Map, STEADY);
   /* DESCRIPTION:  Courant-Friedrichs-Lewy condition of the finest grid */
   addDoubleOption("CFL_NUMBER", CFLFineGrid, 1.25);
+  
+  addDoubleOption("RELAXATION_FACTOR_TURB", Relaxation_Factor_Turb, 1.);
+  
+  addDoubleOption("RELAXATION_FACTOR_FLOW", Relaxation_Factor_Flow, 1.);
   /* DESCRIPTION:  Max time step in local time stepping simulations */
   addDoubleOption("MAX_DELTA_TIME", Max_DeltaTime, 1000000);
   /* DESCRIPTION: Activate The adaptive CFL number. */

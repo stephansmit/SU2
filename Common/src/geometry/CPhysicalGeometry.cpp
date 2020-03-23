@@ -6045,8 +6045,8 @@ void CPhysicalGeometry::ComputeNSpan(CConfig *config, unsigned short val_iZone, 
 
 
     if(marker_flag == OUTFLOW){
-      nSpanWiseSections[INFLOW-1]=100
-      nSpanWiseSections[OUTFLOW-1]=100
+      nSpanWiseSections[INFLOW-1]=100;
+      nSpanWiseSections[OUTFLOW-1]=100;
       if(nSpanWiseSections[INFLOW -1] != nSpanWiseSections[OUTFLOW - 1]){
         char buf[100];
         SPRINTF(buf, "nSpan inflow %u, nSpan outflow %u", nSpanWiseSections[INFLOW], nSpanWiseSections[OUTFLOW]);
